@@ -17,6 +17,7 @@ public:
 	void setByCoordinate(float x, float z, float val);
 
 	void getIndicesForCoordinate(float x, float z, int &x_cell, int &z_cell);
+	void getCornerOfIndex(int x_cell, int z_cell, float &x, float &z);
 	void cellCenter(float x, float z, float &x_cell, float &z_cell);
 	void printGrid(int x, int z);
 

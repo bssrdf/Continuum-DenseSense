@@ -135,10 +135,10 @@ void ContinuumModule::initializeSimulation()
 
 	//std::cout << "making grid" << std::endl;
 
-	float min_x = gSpatialDatabase->getOriginX(); // this doesn't REALLY work. fix it!
-	float min_z = gSpatialDatabase->getOriginZ();
-	float max_x = gSpatialDatabase->getGridSizeX() + min_x;
-	float max_z = gSpatialDatabase->getGridSizeZ() + min_z;
+	float min_x = -25.0f;// gSpatialDatabase->getOriginX(); // this doesn't REALLY work. fix it!
+	float min_z = -25.0f;// gSpatialDatabase->getOriginZ();
+	float max_x = 25.0f;// gSpatialDatabase->getGridSizeX() + min_x;
+	float max_z = 25.0f;// gSpatialDatabase->getGridSizeZ() + min_z;
 
 	std::cout << "world bounds are min: " << min_x << " " << min_z << " max: " << max_x << " " << max_z << std::endl;
 
