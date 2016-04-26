@@ -135,12 +135,12 @@ void ContinuumModule::initializeSimulation()
 
 	//std::cout << "making grid" << std::endl;
 
-	float min_x = -15.0f; //gSpatialDatabase->getOriginX(); // this doesn't work
-	float min_z = -15.0f; //gSpatialDatabase->getOriginZ();
-	float max_x = 15.0f; //gSpatialDatabase->getGridSizeX() + min_x;
-	float max_z = 15.0f; //gSpatialDatabase->getGridSizeZ() + min_z;
+	float min_x = gSpatialDatabase->getOriginX(); // this doesn't REALLY work. fix it!
+	float min_z = gSpatialDatabase->getOriginZ();
+	float max_x = gSpatialDatabase->getGridSizeX() + min_x;
+	float max_z = gSpatialDatabase->getGridSizeZ() + min_z;
 
-	//std::cout << "world bounds are min: " << min_x << " " << min_z << " max: " << max_x << " " << max_z << std::endl;
+	std::cout << "world bounds are min: " << min_x << " " << min_z << " max: " << max_x << " " << max_z << std::endl;
 
 	m_densityVelocityGrid = new ContinuumGrid(RESOLUTION_X, RESOLUTION_Z, Util::Point(min_x, 0.0f, min_z), Util::Point(max_x, 0.0f, max_z));
 
@@ -218,9 +218,10 @@ void ContinuumModule::finish()
 
 SteerLib::AgentInterface * ContinuumModule::createAgent()
 {
-#if PRINTS
+#if _DEBUG
 	std::cout << "made new agent!" << std::endl;
 #endif
+
 	ContinuumAgent *agent = new ContinuumAgent(m_densityVelocityGrid);
 	m_agents.push_back(agent);
 	return agent;

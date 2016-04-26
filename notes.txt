@@ -1,0 +1,100 @@
+4/26/2016
+-debugging notes
+  -MAKE SURE WE'RE CHANGING ARGS FOR THE RIGHT BUILD MODE -> DEBUG!
+  -can view command prompt with linker -> system -> console
+  -in config -> debugging -> need to set workign dir to bin
+  -can provide args in command args
+
+4/25/2016
+-add dynamic grid size -> ehhhh. steersuite is broken like that right now.
+  -turns out gSpatialDatabase ISN'T using the loaded grid size
+  -see TestCaseReader -> the grid with loaded size gets deleted and lost and isn't percolated down
+  -new idea: let's compute grid size based on an AABB of all the objects in the scene
+-figure out what causes breaking in cases like 3-squeeze [done]
+  -turns out the grid size we were providing was too small
+  -bad, bad, bad.
+-add obstacles
+
+// sample drawing a blue quad. POTENTIALLY useful (see what I did there?)
+// slap this in any agent's draw method
+Util::Point p1 = Util::Point(1.0, 0.0, 1.0);
+Util::Point p2 = Util::Point(1.0, 0.0, -1.0);
+Util::Point p3 = Util::Point(-1.0, 0.0, -1.0);
+Util::Point p4 = Util::Point(-1.0, 0.0, 1.0);
+
+Util::DrawLib::glColor(Util::gBlue);
+Util::DrawLib::drawQuad(p1, p2, p3, p4);
+
+**************************************************************************************************************************
+TODO
+-finish finite diff approximation [done]
+-finish splatGoal [done]
+-module constructor [done]
+-agent constructor [done]
+-module frame preprocess [done]
+-agent update using grid potential [done]
+-debug debug debug
+
+
+Current understanding of SteerSuite:
+-each type of sim gets a module and agents
+-agents are built from the module
+  -so the module can pass things in as needed
+  -presumably the module is allowed to store pointers to the agents too
+  -so we can override steersuite's storage
+  -the module can "preprocess" and "postprocess" frames
+
+Things to find out:
+  -how to grab obstacles from the simulation? -> after Thurs?
+
+Algorithm:
+-we're going to make each agent its own group (blaw)
+  -b/c test cases might not allow otherwise?
+  -we may be able to preprocess agents by goal, but -> after Thurs
+-requires a 2D MAC Grid
+
+-each timestep:
+  -module preprocess: snapshot of current situation
+    -build global density field on mac grid (section 4.1)
+    -build global average velocity field on mac grid (equation 7)
+
+  -module preprocess: computing new optimal paths for each group
+    -for each agent, build speed field for agent (section 4.2 and equation 10, remove fT terms)
+      -needs: density at some point where agent wants to go
+      -needs: density/average velocity fields from earlier
+
+    -for each agent, build potential field -> section 4.3
+      -TODO
+      -involves a kind of "flood fill" using a heap (or just a queue)
+      -since we don't have heights here, can we just use radial distance from the goal? -> NO. C depends on speed field
+      -start with 0 as the potential in the cell with the goal, INF everywhere else
+      -add all neighbors to "explore me" list
+        -for neighbor in neighbors, compute:
+          -smallest 2 potential + cost sums of all neighbors in x and z directions
+            -cost is basically a weighted sample of speed at boundary
+          -this lets us compute potential by quadratic equation
+      -compute potential gradients by just diffing neighboring grid cells after all potentials made
+
+
+  -agent process:
+    -sample personal speed and density grids where agent is now to get a velocity -> end of section 4.3
+    -update locations -> tweak what simpleAI already gives
+
+-location enforcement
+  -bin all agents onto a neighbor grid of cell size r
+  -at each grid
+    -for each agent
+        -check 9 grids centered around this one for neighbors
+        -move self and neighbor if any are closer than r
+
+
+Notes:
+-we'll store unit cost fields in the module, although initially 1 per agent
+  -agents will have pointers to their unit cost fields
+  -eventually this will let us have them share unit cost fields
+
+
+TODO:
+-come up with a better mac grid representation
+  -need to be able to get/set staggered value given a cell index
+  -need a function to compute cell index from position

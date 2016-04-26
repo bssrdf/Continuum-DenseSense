@@ -19,8 +19,8 @@
 
 class ContinuumAgent; // forward declaration
 
-#define RESOLUTION_X 20
-#define RESOLUTION_Z 20
+#define RESOLUTION_X 30
+#define RESOLUTION_Z 30
 
 // globally accessible to the continuum plugin
 extern SteerLib::EngineInterface * gEngine;
@@ -53,24 +53,6 @@ namespace ContinuumGlobals {
 
 	extern PhaseProfilers * gPhaseProfilers;
 }
-
-/**
- * @brief An example plugin for the SimulationEngine that provides very basic AI agents.
- *
- * This class is an example of a plug-in module (as opposed to a built-in module).
- * It compiles as part of a dynamic library which is loaded by a SimulationEngine at run-time.
- *
- * The simpleAI plugin consists of three parts:
- *  - This class inherits from SteerLib::ModuleInterface, and implements only the desired functionality.  In this case
- *    the desired functionality is to be able to create/destroy SimpleAgent agents.
- *  - The two global functions createModule() and destroyModule() are implemented so that the engine can load the
- *    dynamic library and get an instance of our SimpleAIModule.
- *  - The SimpleAgent class inherits from SteerLib::AgentInterface, which is the agent steering AI used by the engine.
- *    this agent serves as an example of how to create your own steering AI using SteerLib features.
- *
- */
-
-
 
 /**
 Algorithm:

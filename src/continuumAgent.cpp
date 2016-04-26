@@ -147,10 +147,10 @@ void ContinuumAgent::updateAI(float timeStamp, float dt, unsigned int frameNumbe
 	float dpS = m_potentialGrid->m_d_potential_S->getByCoordinate(_position.x, _position.z);
 	float dpE = m_potentialGrid->m_d_potential_E->getByCoordinate(_position.x, _position.z);
 
-	//float speedW = m_potentialGrid->m_speed_W->getByCoordinate(_position.x, _position.z);
-	//float speedN = m_potentialGrid->m_speed_N->getByCoordinate(_position.x, _position.z);
-	//float speedS = m_potentialGrid->m_speed_S->getByCoordinate(_position.x, _position.z);
-	//float speedE = m_potentialGrid->m_speed_E->getByCoordinate(_position.x, _position.z);
+	float speedW = m_potentialGrid->m_speed_W->getByCoordinate(_position.x, _position.z);
+	float speedN = m_potentialGrid->m_speed_N->getByCoordinate(_position.x, _position.z);
+	float speedS = m_potentialGrid->m_speed_S->getByCoordinate(_position.x, _position.z);
+	float speedE = m_potentialGrid->m_speed_E->getByCoordinate(_position.x, _position.z);
 
 	Util::Vector p_grad = Util::Vector(dpE - dpW, 0.0f, dpN - dpS);
 	// multiply by neg speed in direction, since traveling opposite gradient
@@ -170,6 +170,7 @@ void ContinuumAgent::updateAI(float timeStamp, float dt, unsigned int frameNumbe
 		p_grad.z *= -MAX_SPEED;
 	}
 	//std::cout << "positi is " << _position.x << " " << _position.z << std::endl;
+	//
 	//std::cout << "target is " << goal_pos.x << " " << goal_pos.y << std::endl;
 	//std::cout << "speeds are " << speedW << " " << speedN << " " << speedS << " " << speedE << std::endl;
 	//std::cout << "potens are " << dpW << " " << dpN << " " << dpS << " " << dpE << std::endl;
