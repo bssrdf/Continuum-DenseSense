@@ -13,6 +13,8 @@
 #include <queue>
 #include "SteerLib.h"
 #include "continuumModule.h"
+#include "continuumAgent.h"
+#include "continuumGrid.h"
 
 /**
  * @brief An example agent with very basic AI, that is part of the simpleAI plugin.
@@ -25,8 +27,8 @@
  * This class is instantiated when the engine calls SimpleAIModule::createAgent().
  *
  */
-class ContinuumGrid;
-class PotentialGrid;
+
+class ContinuumModule; // forward declaration
 
 class ContinuumAgent : public SteerLib::AgentInterface
 {
