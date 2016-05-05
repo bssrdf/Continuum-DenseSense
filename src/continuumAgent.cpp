@@ -257,8 +257,8 @@ void ContinuumAgent::drawContinuumGrid() {
 			p2.x = p1.x + cell_size_wMargin_x;
 			p2.z = p1.z;
 
-			p3.z = p2.z - cell_size_wMargin_z;
 			p3.x = p2.x;
+			p3.z = p2.z + cell_size_wMargin_z;
 
 			p4.x = p3.x - cell_size_wMargin_x;
 			p4.z = p3.z;
@@ -271,7 +271,7 @@ void ContinuumAgent::drawContinuumGrid() {
 			shade.g = (float)z / 30.0f;
 
 			Util::DrawLib::glColor(shade);
-			Util::DrawLib::drawQuad(p1, p2, p3, p4);
+			Util::DrawLib::drawQuad(p4, p3, p2, p1);
 		}
 	}
 }

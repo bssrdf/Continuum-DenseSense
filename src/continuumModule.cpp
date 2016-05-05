@@ -236,6 +236,11 @@ void ContinuumModule::setupGrids() {
 	int resX = distX / (biggestAgentRad * 4.0f);
 	int resZ = distZ / (biggestAgentRad * 4.0f);
 
+	if (resX < 0) resX = 1;
+	if (resZ < 0) resZ = 1;
+
+	std::cout << "selected resolution is " << resX << " " << resZ << std::endl;
+
 	m_densityVelocityGrid = new ContinuumGrid(resX, resZ, worldMin, worldMax);
 
 	//std::cout << "finished making grid!" << std::endl;
