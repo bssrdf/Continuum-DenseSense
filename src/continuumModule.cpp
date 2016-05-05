@@ -132,24 +132,41 @@ void ContinuumModule::initializeSimulation()
 	gPhaseProfilers->predictivePhaseProfiler.reset();
 	gPhaseProfilers->reactivePhaseProfiler.reset();
 	gPhaseProfilers->steeringPhaseProfiler.reset();
+}
+
+void ContinuumModule::preprocessSimulation()
+{
+#if _DEBUG
+	std::cout << "preprocessing sim..." << std::endl;
+#endif
+	//Build grids that span everything in the scene
 
 	//std::cout << "making grid" << std::endl;
 
-	float min_x = gSpatialDatabase->getOriginX(); // this doesn't REALLY work. fix it!
-	float min_z = gSpatialDatabase->getOriginZ();
-	float max_x = gSpatialDatabase->getGridSizeX() + min_x;
-	float max_z = gSpatialDatabase->getGridSizeZ() + min_z;
+	// TODO: iterate over everything on the grid ot make an aabb
+	//gSpatialDatabase->
+
+	float min_x = -20.0f;//gSpatialDatabase->getOriginX(); // this doesn't REALLY work. fix it!
+	float min_z = -20.0f;//gSpatialDatabase->getOriginZ();
+	float max_x = 20.0f;//gSpatialDatabase->getGridSizeX() + min_x;
+	float max_z = 20.0f;//gSpatialDatabase->getGridSizeZ() + min_z;
 
 	std::cout << "world bounds are min: " << min_x << " " << min_z << " max: " << max_x << " " << max_z << std::endl;
 
 	m_densityVelocityGrid = new ContinuumGrid(RESOLUTION_X, RESOLUTION_Z, Util::Point(min_x, 0.0f, min_z), Util::Point(max_x, 0.0f, max_z));
 
 	//std::cout << "finished making grid!" << std::endl;
-}
 
-void ContinuumModule::preprocessSimulation()
-{
-	//TODO does nothing for now
+	// initialize all the agents properly
+	int num_agents = m_agents.size();
+	for (int i = 0; i < num_agents; i++) {
+		m_agents[i]->init(m_densityVelocityGrid);
+	}
+
+
+#if _DEBUG
+	std::cout << "done preprocessing" << std::endl;
+#endif
 }
 
 void ContinuumModule::preprocessFrame(float timeStamp, float dt, unsigned int frameNumber)
@@ -222,7 +239,7 @@ SteerLib::AgentInterface * ContinuumModule::createAgent()
 	std::cout << "made new agent!" << std::endl;
 #endif
 
-	ContinuumAgent *agent = new ContinuumAgent(m_densityVelocityGrid);
+	ContinuumAgent *agent = new ContinuumAgent();
 	m_agents.push_back(agent);
 	return agent;
 }

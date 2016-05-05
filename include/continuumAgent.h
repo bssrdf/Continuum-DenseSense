@@ -33,7 +33,8 @@ class ContinuumModule; // forward declaration
 class ContinuumAgent : public SteerLib::AgentInterface
 {
 public:
-	ContinuumAgent(ContinuumGrid *densityVelocityGrid);
+	ContinuumAgent();
+	void init(ContinuumGrid *densityVelocityGrid);
 	~ContinuumAgent();
 	void reset(const SteerLib::AgentInitialConditions & initialConditions, SteerLib::EngineInterface * engineInfo);
 	void updateAI(float timeStamp, float dt, unsigned int frameNumber);

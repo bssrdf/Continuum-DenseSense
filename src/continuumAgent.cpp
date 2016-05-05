@@ -17,20 +17,24 @@
 
 #define PRINTS 0
 
-ContinuumAgent::ContinuumAgent(ContinuumGrid *densityVelocityGrid)
+ContinuumAgent::ContinuumAgent()
 {
+	m_potentialGrid = NULL;
+	_enabled = false;
+}
+
+void ContinuumAgent::init(ContinuumGrid *densityVelocityGrid) {
 	Util::Point min = densityVelocityGrid->m_min;
 	Util::Point max = densityVelocityGrid->m_max;
 	int res_x = densityVelocityGrid->m_res_x;
 	int res_z = densityVelocityGrid->m_res_z;
 
 	m_potentialGrid = new PotentialGrid(res_x, res_z, min, max, densityVelocityGrid);
-	_enabled = false;
 }
 
 ContinuumAgent::~ContinuumAgent()
 {
-	delete m_potentialGrid;
+	if (m_potentialGrid != NULL) delete m_potentialGrid;
 	if (_enabled) {
 		Util::AxisAlignedBox bounds(_position.x-_radius, _position.x+_radius, 0.0f, 0.0f, _position.z-_radius, _position.z+_radius);
 		gSpatialDatabase->removeObject( this, bounds);
