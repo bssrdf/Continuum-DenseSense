@@ -11,27 +11,33 @@
   -dPotential, between this cell and next
   -velocity computed from dPotentials and speed field value pointing the same way as dPotential
 
-0) reimplement continuum grid as above
-  -have manager scan all the items in the sim to set grid size
-  -have manager be able to draw a single floatGrid2D if needed -> make sure there's cell separation
-  -we'll still do it as a bunch of grids of the same resolution, with some representing faces
-  -for non-aniso face values, we'll just use two grids to store all north faces and all east faces ( or north and west?)
-  -we'll index cleverly to get what we need
+TODO:
+  -reimplement global continuum grid
+    -have manager scan all the items in the sim to set grid size [done]
+      -so it turns out if we're scanning all the goals, those aren't available in preprocess
+      -but they ARE available on the first frame
+      -so we have to actually build the grids on the first frame of continuumModule.preprocessFrame()
+    -have manager be able to draw a single floatGrid2D if needed -> make sure there's cell separation [done]
+    -we'll still do it as a bunch of grids of the same resolution, with some representing faces
+    -for non-aniso face values, we'll just store duplicates for now -> easier
+  -reimplement potential grid
+  -reimplement algorithm
+  -optimization
+    -have manager check if agents have same goal, let them share a potential grid
+    -all params except potential are universal!
 
-1) splat obstacles onto discomfort grid -> precomputation on sim init, basically
 
-2) splat agents onto density grid and avg_velocity grids -> section 4.1 + equation 7
-3) compute anisotrop flow speed INTO each neighbor -> equation 9, 10
-4) compute cost INTO each neighbor -> equation 4. see section 4.2, beware typos
-5) compute potential field with fast flood fill
-6) compute dPotential, renormalize -> I'm guessing... divide everything by max so grad tops out at 1?
-7) compute velocity at each wall with anisotropic speed selected by direction of dPotential
-8) bilinear interp each agent's velocity
-9) advect
+Algorithm
+0) splat obstacles onto discomfort grid -> precomputation on sim init, basically. do this like agent density splatting.
 
-10) optimization
-  -have manager check if agents have same goal, let them share a potential grid
-  -all params except potential are universal!
+1) splat agents onto density grid and avg_velocity grids -> section 4.1 + equation 7
+2) compute anisotrop flow speed INTO each neighbor -> equation 9, 10
+3) compute anisotrop cost INTO each neighbor -> equation 4. see section 4.2, beware typos
+4) compute potential field with fast flood fill
+5) compute dPotential, renormalize -> I'm guessing... divide everything by max so grad tops out at 1?
+6) compute velocity at each wall with anisotropic speed selected by direction of dPotential
+7) bilinear interp each agent's velocity
+8) advect
 
 
 4/26/2016

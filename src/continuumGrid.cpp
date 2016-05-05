@@ -1,5 +1,129 @@
 #include "continuumGrid.h"
 
+ContinuumGrid::ContinuumGrid(int res_x, int res_z, Util::Point min, Util::Point max)
+{
+	m_density = new float_grid_2D(res_x, res_z, min, max);
+	m_avg_vel_x = new float_grid_2D(res_x, res_z, min, max);
+	m_avg_vel_z = new float_grid_2D(res_x, res_z, min, max);
+
+	m_speed_N = new float_grid_2D(res_x, res_z, min, max);
+	m_speed_S = new float_grid_2D(res_x, res_z, min, max);
+	m_speed_E = new float_grid_2D(res_x, res_z, min, max);
+	m_speed_W = new float_grid_2D(res_x, res_z, min, max);
+
+	m_cost_N = new float_grid_2D(res_x, res_z, min, max);
+	m_cost_S = new float_grid_2D(res_x, res_z, min, max);
+	m_cost_E = new float_grid_2D(res_x, res_z, min, max);
+	m_cost_W = new float_grid_2D(res_x, res_z, min, max);
+
+	m_res_x = res_x;
+	m_res_z = res_z;
+	m_min = min;
+	m_max = max;
+}
+
+ContinuumGrid::~ContinuumGrid()
+{
+	delete m_density;
+	delete m_avg_vel_x;
+	delete m_avg_vel_z;
+
+	delete m_speed_N;
+	delete m_speed_S;
+	delete m_speed_E;
+	delete m_speed_W;
+
+	delete m_cost_N;
+	delete m_cost_S;
+	delete m_cost_E;
+	delete m_cost_W;
+}
+
+void ContinuumGrid::resetSplats()
+{
+	m_density->clear(0.0f);
+	m_avg_vel_x->clear(0.0f);
+	m_avg_vel_z->clear(0.0f);
+}
+
+void ContinuumGrid::splatAgent(Util::Point agentPosition, Util::Vector agentVelocity)
+{
+	// section 4.1
+
+	// get the position of the closest cell with center coordinates < agentPosition
+	Util::Point center = m_density->getCellCenter(agentPosition.x, agentPosition.z);
+
+	// it's ok if this ends up being out of bounds, will be handled by splatting below.
+
+	if (center.x > agentPosition.x) center.x -= m_density->m_cell_size_x;
+	if (center.z > agentPosition.z) center.z -= m_density->m_cell_size_z;
+
+	int x_cell_idx;
+	int z_cell_idx;
+	m_density->getIndicesForCoordinate(center.x, center.z, x_cell_idx, z_cell_idx);
+
+	// compute contribs to this cell and each cell w/larger coord
+	float cell_width = m_density->m_cell_size_x;
+	float cell_height = m_density->m_cell_size_z;
+
+	// compute coords relative to center. normalize to cell scale.
+	float dx = (agentPosition.x - center.x) / cell_width;
+	float dz = (agentPosition.z - center.z) / cell_height;
+
+	float pA = pow(min(1.0f - dx, 1.0f - dz), DENSITY_FALLOFF); // this cell
+	float pB = pow(min(dx, 1.0f - dz), DENSITY_FALLOFF); // right
+	float pC = pow(min(dx, dz), DENSITY_FALLOFF); // up-right
+	float pD = pow(min(1.0f - dx, dz), DENSITY_FALLOFF); // up
+
+	// add contributions to each cell with coordinates larger
+	m_density->addByIndex(x_cell_idx, z_cell_idx, pA);
+	m_density->addByIndex(x_cell_idx + 1, z_cell_idx, pB);
+	m_density->addByIndex(x_cell_idx + 1, z_cell_idx + 1, pC);
+	m_density->addByIndex(x_cell_idx, z_cell_idx + 1, pD);
+
+	// compute avg velocity contributions - equation 7
+	float vAx = agentVelocity.x * pA;
+	float vBx = agentVelocity.x * pB;
+	float vCx = agentVelocity.x * pC;
+	float vDx = agentVelocity.x * pD;
+
+	float vAz = agentVelocity.z * pA;
+	float vBz = agentVelocity.z * pB;
+	float vCz = agentVelocity.z * pC;
+	float vDz = agentVelocity.z * pD;
+
+	m_avg_vel_x->addByIndex(x_cell_idx, z_cell_idx, vAx);
+	m_avg_vel_x->addByIndex(x_cell_idx + 1, z_cell_idx, vBx);
+	m_avg_vel_x->addByIndex(x_cell_idx + 1, z_cell_idx + 1, vCx);
+	m_avg_vel_x->addByIndex(x_cell_idx, z_cell_idx + 1, vDx);
+
+	m_avg_vel_z->addByIndex(x_cell_idx, z_cell_idx, vAz);
+	m_avg_vel_z->addByIndex(x_cell_idx + 1, z_cell_idx, vBz);
+	m_avg_vel_z->addByIndex(x_cell_idx + 1, z_cell_idx + 1, vCz);
+	m_avg_vel_z->addByIndex(x_cell_idx, z_cell_idx + 1, vDz);
+}
+
+void ContinuumGrid::normalizeVelocitiesByDensity()
+{
+	// equation 7
+	// divide each cell's velocity sums by the sum of density here
+	float sum_v_x;
+	float sum_v_z;
+	float sum_p;
+	for (int x = 0; x < m_res_x; x++) {
+		for (int z = 0; z < m_res_z; z++) {
+			sum_p = m_density->getByIndex(x, z);
+
+			sum_v_x = m_avg_vel_x->getByIndex(x, z);
+			m_avg_vel_x->setByIndex(x, z, sum_v_x / sum_p);
+
+			sum_v_z = m_avg_vel_z->getByIndex(x, z);
+			m_avg_vel_z->setByIndex(x, z, sum_v_z / sum_p);
+		}
+	}
+}
+
+
 PotentialGrid::PotentialGrid(int res_x, int res_z, Util::Point min, Util::Point max, ContinuumGrid *speeds_densities)
 {
 	m_speeds_densities = speeds_densities;
@@ -8,40 +132,33 @@ PotentialGrid::PotentialGrid(int res_x, int res_z, Util::Point min, Util::Point 
 	m_res_z = res_z;
 	m_potential = new float_grid_2D(res_x, res_z, min, max);
 
-	m_d_potential_N = new float_grid_2D(res_x, res_z, min, max);
-	m_d_potential_S = new float_grid_2D(res_x, res_z, min, max);
-	m_d_potential_E = new float_grid_2D(res_x, res_z, min, max);
-	m_d_potential_W = new float_grid_2D(res_x, res_z, min, max);
-
-	m_uCost_N = new float_grid_2D(res_x, res_z, min, max);
-	m_uCost_S = new float_grid_2D(res_x, res_z, min, max);
-	m_uCost_E = new float_grid_2D(res_x, res_z, min, max);
-	m_uCost_W = new float_grid_2D(res_x, res_z, min, max);
-	  
-	m_speed_N = new float_grid_2D(res_x, res_z, min, max);
-	m_speed_S = new float_grid_2D(res_x, res_z, min, max);
-	m_speed_E = new float_grid_2D(res_x, res_z, min, max);
-	m_speed_W = new float_grid_2D(res_x, res_z, min, max);
+	m_dPotential_N = new float_grid_2D(res_x, res_z, min, max);
+	m_dPotential_S = new float_grid_2D(res_x, res_z, min, max);
+	m_dPotential_E = new float_grid_2D(res_x, res_z, min, max);
+	m_dPotential_W = new float_grid_2D(res_x, res_z, min, max);
+	
+	m_velocity_N = new float_grid_2D(res_x, res_z, min, max);
+	m_velocity_S = new float_grid_2D(res_x, res_z, min, max);
+	m_velocity_E = new float_grid_2D(res_x, res_z, min, max);
+	m_velocity_W = new float_grid_2D(res_x, res_z, min, max);
 
 	m_known = new float_grid_2D(res_x, res_z, min, max);
 }
 
 PotentialGrid::~PotentialGrid()
 {
-	delete m_d_potential_N;
-	delete m_d_potential_S;
-	delete m_d_potential_E;
-	delete m_d_potential_W;
 
-	delete m_uCost_N;
-	delete m_uCost_S;
-	delete m_uCost_E;
-	delete m_uCost_W;
-			 
-	delete m_speed_N;
-	delete m_speed_S;
-	delete m_speed_E;
-	delete m_speed_W;
+	delete m_potential;
+
+	delete m_dPotential_N;
+	delete m_dPotential_S;
+	delete m_dPotential_E;
+	delete m_dPotential_W;
+
+	delete m_velocity_N;
+	delete m_velocity_S;
+	delete m_velocity_E;
+	delete m_velocity_W;
 
 	delete m_known;
 }
@@ -68,7 +185,7 @@ float speedSingleCell(ContinuumGrid *speed_density, bool eastWest, int i, int j)
 	//std::cout << "got " << ((p - DENSITY_MIN) / (pmax - DENSITY_MIN)) * fv << std::endl;
 	return ((p - DENSITY_MIN) / (pmax - DENSITY_MIN)) * fv;
 }
-
+/*
 void PotentialGrid::computeSpeedField()
 {
 	// speed field computation
@@ -81,28 +198,28 @@ void PotentialGrid::computeSpeedField()
 	for (int i = 0; i < m_res_x; i++) {
 		for (int j = 0; j < m_res_z - 1; j++) {
 			speed_into_cell = speedSingleCell(m_speeds_densities, false, i, j + 1);
-			m_speed_N->setByIndex(i, j, speed_into_cell);
+			m_velocity_N->setByIndex(i, j, speed_into_cell);
 		}
 	}
 	// south
 	for (int i = 0; i < m_res_x; i++) {
 		for (int j = 1; j < m_res_z; j++) {
 			speed_into_cell = speedSingleCell(m_speeds_densities, false, i, j - 1);
-			m_speed_S->setByIndex(i, j, speed_into_cell);
+			m_velocity_S->setByIndex(i, j, speed_into_cell);
 		}
 	}
 	// east
 	for (int i = 0; i < m_res_x - 1; i++) {
 		for (int j = 0; j < m_res_z; j++) {
 			speed_into_cell = speedSingleCell(m_speeds_densities, true, i + 1, j);
-			m_speed_E->setByIndex(i, j, speed_into_cell);
+			m_velocity_E->setByIndex(i, j, speed_into_cell);
 		}
 	}
 	// west
 	for (int i = 1; i < m_res_x; i++) {
 		for (int j = 0; j < m_res_z; j++) {
 			speed_into_cell = speedSingleCell(m_speeds_densities, true, i - 1, j);
-			m_speed_W->setByIndex(i, j, speed_into_cell);
+			m_velocity_W->setByIndex(i, j, speed_into_cell);
 		}
 	}
 }
@@ -361,108 +478,13 @@ void PotentialGrid::computePotentialDeltas()
 		}
 	}
 }
-
+*/
 void PotentialGrid::update(Util::Point goalPosition)
 {
-	computeSpeedField();
+	return;
+	//computeSpeedField();
 
-	computeUnitCosts();
+	//computeUnitCosts();
 	//std::cout << "splatting goal" << std::endl;
-	splatGoal(goalPosition);
-}
-
-ContinuumGrid::ContinuumGrid(int res_x, int res_z, Util::Point min, Util::Point max)
-{
-	m_density = new float_grid_2D(res_x, res_z, min, max);
-	m_avg_vel_x = new float_grid_2D(res_x, res_z, min, max);
-	m_avg_vel_z = new float_grid_2D(res_x, res_z, min, max);
-	m_res_x = res_x;
-	m_res_z = res_z;
-	m_min = min;
-	m_max = max;
-}
-
-ContinuumGrid::~ContinuumGrid()
-{
-	delete m_density;
-	delete m_avg_vel_x;
-	delete m_avg_vel_z;
-}
-
-void ContinuumGrid::reset()
-{
-	m_density->clear(0.0f);
-	m_avg_vel_x->clear(0.0f);
-	m_avg_vel_z->clear(0.0f);
-}
-
-void ContinuumGrid::splatAgent(Util::Point agentPosition, Util::Vector agentVelocity)
-{
-	// get the position of the closest cell with coordinates < agentPosition
-	float x_cell;
-	float z_cell;
-	m_density->cellCenter(agentPosition.x, agentPosition.z, x_cell, z_cell);
-	if (x_cell > agentPosition.x) x_cell -= m_density->m_cell_size_x;
-	if (z_cell > agentPosition.z) z_cell -= m_density->m_cell_size_z;
-
-	int x_cell_idx;
-	int z_cell_idx;
-	m_density->getIndicesForCoordinate(x_cell, z_cell, x_cell_idx, z_cell_idx);
-
-	// compute contribs to this cell and each cell w/larger coord
-	float cell_width = m_density->m_cell_size_x;
-	float cell_height = m_density->m_cell_size_z;
-
-	float dx = abs(agentPosition.x - x_cell) / cell_width;
-	float dz = abs(agentPosition.z - z_cell) / cell_height;
-
-	float pA = pow(min(1.0f - dx, 1.0f - dz), DENSITY_FALLOFF); // this cell
-	float pB = pow(min(dx, 1.0f - dz), DENSITY_FALLOFF); // right
-	float pC = pow(min(dx,dz), DENSITY_FALLOFF); // up-right
-	float pD = pow(min(1.0f - dx, dz), DENSITY_FALLOFF); // up
-
-	// add contributions to each cell with coordinates larger
-	m_density->addByIndex(x_cell_idx, z_cell_idx, pA);
-	m_density->addByIndex(x_cell_idx + 1, z_cell_idx, pB);
-	m_density->addByIndex(x_cell_idx + 1, z_cell_idx + 1, pC);
-	m_density->addByIndex(x_cell_idx, z_cell_idx + 1, pD);
-
-	// compute avg velocity contributions
-	float vAx = agentVelocity.x * pA;
-	float vBx = agentVelocity.x * pB;
-	float vCx = agentVelocity.x * pC;
-	float vDx = agentVelocity.x * pD;
-
-	float vAz = agentVelocity.z * pA;
-	float vBz = agentVelocity.z * pB;
-	float vCz = agentVelocity.z * pC;
-	float vDz = agentVelocity.z * pD;
-
-	m_avg_vel_x->addByIndex(x_cell_idx, z_cell_idx, vAx);
-	m_avg_vel_x->addByIndex(x_cell_idx + 1, z_cell_idx, vBx);
-	m_avg_vel_x->addByIndex(x_cell_idx + 1, z_cell_idx + 1, vCx);
-	m_avg_vel_x->addByIndex(x_cell_idx, z_cell_idx + 1, vDx);
-
-	m_avg_vel_z->addByIndex(x_cell_idx, z_cell_idx, vAz);
-	m_avg_vel_z->addByIndex(x_cell_idx + 1, z_cell_idx, vBz);
-	m_avg_vel_z->addByIndex(x_cell_idx + 1, z_cell_idx + 1, vCz);
-	m_avg_vel_z->addByIndex(x_cell_idx, z_cell_idx + 1, vDz);
-}
-
-void ContinuumGrid::normalizeVelocitiesByDensity()
-{
-	float avg_density;
-	float avg_x;
-	float avg_z;
-	m_max_density = 0.0f;
-	for (int i = 0; i < m_res_x; i++) {
-		for (int j = 0; j < m_res_z; j++) {
-			avg_density = m_density->getByIndex(i, j);
-			m_max_density = max(avg_density, m_max_density);
-			avg_x = m_avg_vel_x->getByIndex(i, j) / avg_density;
-			avg_z = m_avg_vel_z->getByIndex(i, j) / avg_density;
-			m_avg_vel_x->setByIndex(i, j, avg_x);
-			m_avg_vel_z->setByIndex(i, j, avg_z);
-		}
-	}
+	//splatGoal(goalPosition);
 }

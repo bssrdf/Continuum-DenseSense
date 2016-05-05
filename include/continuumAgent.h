@@ -41,6 +41,7 @@ public:
 	void updateAI(float timeStamp, float dt, unsigned int frameNumber);
 	void disable();
 	void draw();
+	void drawContinuumGrid(); // for debugging
 
 	bool enabled() const { return _enabled; }
 	Util::Point position() const { return _position; }
@@ -67,6 +68,7 @@ public:
 	float computePenetration(const Util::Point & p, float radius) { return Util::computeCircleCirclePenetration2D( _position, _radius, p, radius); }
 	//@}
 
+	std::vector<SteerLib::AgentGoalInfo> m_allGoalsList;
 
 protected:
 	/// Updates position, velocity, and orientation of the agent, given the force and dt time step.

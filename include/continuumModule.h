@@ -19,9 +19,6 @@
 
 class ContinuumAgent; // forward declaration
 
-#define RESOLUTION_X 30
-#define RESOLUTION_Z 30
-
 // globally accessible to the continuum plugin
 extern SteerLib::EngineInterface * gEngine;
 extern SteerLib::SpatialDataBaseInterface * gSpatialDatabase;
@@ -111,6 +108,8 @@ public:
 	void cleanupSimulation();
 
 protected:
+	void setupGrids();
+
 	std::string logFilename; // = "AI.log";
 	bool logStats; // = false;
 	Logger * _logger;

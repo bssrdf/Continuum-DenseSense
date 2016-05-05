@@ -50,6 +50,7 @@ void ContinuumAgent::disable()
 
 void ContinuumAgent::reset(const SteerLib::AgentInitialConditions & initialConditions, SteerLib::EngineInterface * engineInfo)
 {
+	m_allGoalsList.clear();
 	// compute the "old" bounding box of the agent before it is reset.  its OK that it will be invalid if the agent was previously disabled
 	// because the value is not used in that case.
 	Util::AxisAlignedBox oldBounds(_position.x-_radius, _position.x+_radius, 0.0f, 0.0f, _position.z-_radius, _position.z+_radius);
@@ -82,11 +83,13 @@ void ContinuumAgent::reset(const SteerLib::AgentInitialConditions & initialCondi
 	for (unsigned int i=0; i<initialConditions.goals.size(); i++) {
 		if (initialConditions.goals[i].goalType == SteerLib::GOAL_TYPE_SEEK_STATIC_TARGET) {
 			_goalQueue.push(initialConditions.goals[i]);
+			m_allGoalsList.push_back(initialConditions.goals[i]);
 			if (initialConditions.goals[i].targetIsRandom) {
 				// if the goal is random, we must randomly generate the goal.
 				SteerLib::AgentGoalInfo _goal;
 				_goal.targetLocation = gSpatialDatabase->randomPositionWithoutCollisions(1.0f, true);
 				_goalQueue.push(_goal);
+				m_allGoalsList.push_back(_goal);
 			}
 		}
 		else {
@@ -108,6 +111,9 @@ void ContinuumAgent::reset(const SteerLib::AgentInitialConditions & initialCondi
 
 void ContinuumAgent::updateAI(float timeStamp, float dt, unsigned int frameNumber)
 {
+	if (m_potentialGrid == NULL) return; // don't do a thing until m_potentialGrid is ready
+
+
 	//std::cout << "updating agent" << std::endl;
 	//std::cout << "agent is at " << _position.x << " " << _position.z;
 	int x;
@@ -146,36 +152,36 @@ void ContinuumAgent::updateAI(float timeStamp, float dt, unsigned int frameNumbe
 	//m_potentialGrid->m_potential->printGrid(x, z);
 	//std::cout << "done updating grid with target " << pos.x << " " << pos.y << std::endl;
 	// renormalize gradient
-	float dpW = m_potentialGrid->m_d_potential_W->getByCoordinate(_position.x, _position.z);
-	float dpN = m_potentialGrid->m_d_potential_N->getByCoordinate(_position.x, _position.z);
-	float dpS = m_potentialGrid->m_d_potential_S->getByCoordinate(_position.x, _position.z);
-	float dpE = m_potentialGrid->m_d_potential_E->getByCoordinate(_position.x, _position.z);
+	//float dpW = m_potentialGrid->m_d_potential_W->getByCoordinate(_position.x, _position.z);
+	//float dpN = m_potentialGrid->m_d_potential_N->getByCoordinate(_position.x, _position.z);
+	//float dpS = m_potentialGrid->m_d_potential_S->getByCoordinate(_position.x, _position.z);
+	//float dpE = m_potentialGrid->m_d_potential_E->getByCoordinate(_position.x, _position.z);
+	//
+	//float speedW = m_potentialGrid->m_speed_W->getByCoordinate(_position.x, _position.z);
+	//float speedN = m_potentialGrid->m_speed_N->getByCoordinate(_position.x, _position.z);
+	//float speedS = m_potentialGrid->m_speed_S->getByCoordinate(_position.x, _position.z);
+	//float speedE = m_potentialGrid->m_speed_E->getByCoordinate(_position.x, _position.z);
 
-	float speedW = m_potentialGrid->m_speed_W->getByCoordinate(_position.x, _position.z);
-	float speedN = m_potentialGrid->m_speed_N->getByCoordinate(_position.x, _position.z);
-	float speedS = m_potentialGrid->m_speed_S->getByCoordinate(_position.x, _position.z);
-	float speedE = m_potentialGrid->m_speed_E->getByCoordinate(_position.x, _position.z);
-
-	Util::Vector p_grad = Util::Vector(dpE - dpW, 0.0f, dpN - dpS);
-	// multiply by neg speed in direction, since traveling opposite gradient
-	if (p_grad.x > 0.0f) {
-		// going east
-		p_grad.x *= -MAX_SPEED;
-	}
-	else {
-		p_grad.x *= -MAX_SPEED;
-	}
-
-	if (p_grad.z > 0.0f) {
-		// going north
-		p_grad.z *= -MAX_SPEED;
-	}
-	else {
-		p_grad.z *= -MAX_SPEED;
-	}
-	if (p_grad.x > 100000.0f || p_grad.z > 100000.0f) {
-		std::cout << "error, out of bounds?" << std::endl;
-	}
+	//Util::Vector p_grad = Util::Vector(dpE - dpW, 0.0f, dpN - dpS);
+	//// multiply by neg speed in direction, since traveling opposite gradient
+	//if (p_grad.x > 0.0f) {
+	//	// going east
+	//	p_grad.x *= -MAX_SPEED;
+	//}
+	//else {
+	//	p_grad.x *= -MAX_SPEED;
+	//}
+	//
+	//if (p_grad.z > 0.0f) {
+	//	// going north
+	//	p_grad.z *= -MAX_SPEED;
+	//}
+	//else {
+	//	p_grad.z *= -MAX_SPEED;
+	//}
+	//if (p_grad.x > 100000.0f || p_grad.z > 100000.0f) {
+	//	std::cout << "error, out of bounds?" << std::endl;
+	//}
 	//std::cout << "positi is " << _position.x << " " << _position.z << std::endl;
 	//
 	//std::cout << "target is " << goal_pos.x << " " << goal_pos.y << std::endl;
@@ -183,7 +189,7 @@ void ContinuumAgent::updateAI(float timeStamp, float dt, unsigned int frameNumbe
 	//std::cout << "potens are " << dpW << " " << dpN << " " << dpS << " " << dpE << std::endl;
 	//std::cout << "grad is " << p_grad.x << " " << p_grad.z << std::endl;
 
-	_doEulerStep(p_grad, dt);
+	_doEulerStep(goal_pos - _position, dt);
 
 }
 
@@ -209,34 +215,8 @@ void ContinuumAgent::draw()
 			Util::DrawLib::drawAgentDisc(_position, _forward, _radius);
 		}
 
-		Util::Point p1 = Util::Point(); // corner
-		Util::Point p2 = Util::Point();
-		Util::Point p3 = Util::Point();
-		Util::Point p4 = Util::Point();
-		Color shade(0.0f, 0.0f, 0.0f);
-
-		// draw allll the quads
-		float_grid_2D *potenVals = m_potentialGrid->m_potential;
-		for (int x = 0; x < potenVals->m_res_x; x++) {
-			for (int z = 0; z < potenVals->m_res_z; z++) {
-				potenVals->getCornerOfIndex(x, z, p1.x, p1.z);
-				p2.x = p1.x + potenVals->m_res_x;
-				p2.z = p1.z;
-				p3.z = p2.z - potenVals->m_res_z;
-				p3.x = p2.x;
-				p4.x = p3.x - potenVals->m_res_x;
-				p4.z = p3.z;
-				shade.r = potenVals->getByIndex(x, z) / POTENTIAL_MAX;
-				shade.g = potenVals->getByIndex(x, z) / POTENTIAL_MAX;
-				shade.b = potenVals->getByIndex(x, z) / POTENTIAL_MAX;
-
-				shade.r = (float)x / 30.0f;
-				shade.g = (float)z / 30.0f;
-
-				Util::DrawLib::glColor(shade);
-				Util::DrawLib::drawQuad(p1, p2, p3, p4);
-			}
-		}
+		// draw a debug grid
+		drawContinuumGrid();
 
 	}
 	else {
@@ -248,6 +228,53 @@ void ContinuumAgent::draw()
 #endif
 }
 
+void ContinuumAgent::drawContinuumGrid() {
+	if (m_potentialGrid == NULL) return;
+
+	float_grid_2D *potenVals = m_potentialGrid->m_potential;
+
+	Util::Point p1 = Util::Point(); // corner
+	Util::Point p2 = Util::Point();
+	Util::Point p3 = Util::Point();
+	Util::Point p4 = Util::Point();
+	Color shade(0.0f, 0.0f, 0.0f);
+	float cell_margin_x = potenVals->m_cell_size_x / 15.0f;
+	float cell_margin_z = potenVals->m_cell_size_z / 15.0f;
+
+	float cell_size_wMargin_x = potenVals->m_cell_size_x - 2.0f * cell_margin_x;
+	float cell_size_wMargin_z = potenVals->m_cell_size_z - 2.0f * cell_margin_z;
+
+	// draw allll the quads
+	for (int x = 0; x < potenVals->m_res_x; x++) {
+		for (int z = 0; z < potenVals->m_res_z; z++) {
+						
+			p1 = potenVals->getCornerOfIndex(x, z);
+
+			// create a margin
+			p1.x += cell_margin_x;
+			p1.z += cell_margin_z;
+
+			p2.x = p1.x + cell_size_wMargin_x;
+			p2.z = p1.z;
+
+			p3.z = p2.z - cell_size_wMargin_z;
+			p3.x = p2.x;
+
+			p4.x = p3.x - cell_size_wMargin_x;
+			p4.z = p3.z;
+
+			shade.r = potenVals->getByIndex(x, z) / POTENTIAL_MAX;
+			shade.g = potenVals->getByIndex(x, z) / POTENTIAL_MAX;
+			shade.b = potenVals->getByIndex(x, z) / POTENTIAL_MAX;
+
+			shade.r = (float)x / 30.0f;
+			shade.g = (float)z / 30.0f;
+
+			Util::DrawLib::glColor(shade);
+			Util::DrawLib::drawQuad(p1, p2, p3, p4);
+		}
+	}
+}
 
 void ContinuumAgent::_doEulerStep(const Util::Vector & steeringDecisionForce, float dt)
 {

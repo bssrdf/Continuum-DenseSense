@@ -52,6 +52,8 @@ PLUGIN_API void destroyModule( SteerLib::ModuleInterface*  module )
 
 void ContinuumModule::init( const SteerLib::OptionDictionary & options, SteerLib::EngineInterface * engineInfo )
 {
+	m_densityVelocityGrid = NULL;
+
 	gEngine = engineInfo;
 	gSpatialDatabase = engineInfo->getSpatialDatabase();
 #if PRINTS
@@ -136,21 +138,105 @@ void ContinuumModule::initializeSimulation()
 
 void ContinuumModule::preprocessSimulation()
 {
-#if _DEBUG
-	std::cout << "preprocessing sim..." << std::endl;
-#endif
-	//Build grids that span everything in the scene
 
-	//std::cout << "making grid" << std::endl;
+}
 
-	float min_x = -25.0f;// gSpatialDatabase->getOriginX(); // this doesn't REALLY work. fix it!
-	float min_z = -25.0f;// gSpatialDatabase->getOriginZ();
-	float max_x = 25.0f;// gSpatialDatabase->getGridSizeX() + min_x;
-	float max_z = 25.0f;// gSpatialDatabase->getGridSizeZ() + min_z;
+void ContinuumModule::setupGrids() {
+	//Build grids that are double the size needed to span everything in the scene
+	// make sure the resolution is sufficient so that cell is at least two agents wide
 
-	std::cout << "world bounds are min: " << min_x << " " << min_z << " max: " << max_x << " " << max_z << std::endl;
+	std::set<SteerLib::SpatialDatabaseItemPtr> neighborList;
+	float big_val = HUGE_VAL;
+	gSpatialDatabase->getItemsInRange(neighborList, -big_val, big_val, -big_val, big_val, NULL);
 
-	m_densityVelocityGrid = new ContinuumGrid(RESOLUTION_X, RESOLUTION_Z, Util::Point(min_x, 0.0f, min_z), Util::Point(max_x, 0.0f, max_z));
+
+	SteerLib::ObstacleInterface *tmp_ob;
+	SteerLib::AgentInterface * tmp_agent;
+	Util::AxisAlignedBox tmp_bound;
+
+	Util::Point worldMin;
+	worldMin.x = big_val;
+	worldMin.z = big_val;
+	Util::Point worldMax;
+	worldMax.x = -big_val;
+	worldMax.z = -big_val;
+
+	for (std::set<SteerLib::SpatialDatabaseItemPtr>::iterator neighbour = neighborList.begin(); 
+		neighbour != neighborList.end(); neighbour++)
+	{
+		if (!(*neighbour)->isAgent())
+		{
+			// check the obstacle's AABB
+			tmp_ob = dynamic_cast<SteerLib::ObstacleInterface *>(*neighbour);
+			tmp_bound = tmp_ob->getBounds();
+			worldMin.x = std::fmin(tmp_bound.xmin, worldMin.x);
+			worldMin.z = std::fmin(tmp_bound.zmin, worldMin.z);
+			worldMax.x = std::fmax(tmp_bound.xmax, worldMax.x);
+			worldMax.z = std::fmax(tmp_bound.zmax, worldMax.z);
+		}
+		else {
+			// check the agent's position
+			tmp_agent = dynamic_cast<SteerLib::AgentInterface *>(*neighbour);
+			worldMin.x = std::fmin(tmp_agent->position().x, worldMin.x);
+			worldMin.z = std::fmin(tmp_agent->position().z, worldMin.z);
+			worldMax.x = std::fmax(tmp_agent->position().x, worldMax.x);
+			worldMax.z = std::fmax(tmp_agent->position().z, worldMax.z);
+		}
+	}
+
+	// check positions and goals of agents we know about
+	int numAgents = m_agents.size();
+	ContinuumAgent *tmp_cAgent;
+	int tmp_numGoals;
+	SteerLib::AgentGoalInfo tmp_goal;
+	float biggestAgentRad = 0.0f;
+
+	for (int i = 0; i < numAgents; i++) {
+		tmp_cAgent = m_agents[i];
+		biggestAgentRad = std::fmax(tmp_cAgent->radius(), biggestAgentRad);
+		worldMin.x = std::fmin(tmp_cAgent->position().x, worldMin.x);
+		worldMin.z = std::fmin(tmp_cAgent->position().z, worldMin.z);
+		worldMax.x = std::fmax(tmp_cAgent->position().x, worldMax.x);
+		worldMax.z = std::fmax(tmp_cAgent->position().z, worldMax.z);
+
+		tmp_numGoals = tmp_cAgent->m_allGoalsList.size();
+		for (int i = 0; i < tmp_numGoals; i++) {
+			tmp_goal = tmp_cAgent->m_allGoalsList[i];
+			if (tmp_goal.goalType == SteerLib::GOAL_TYPE_AXIS_ALIGNED_BOX_GOAL) {
+				worldMin.x = std::fmin(tmp_goal.targetRegion.xmin, worldMin.x);
+				worldMin.z = std::fmin(tmp_goal.targetRegion.zmin, worldMin.z);
+				worldMax.x = std::fmax(tmp_goal.targetRegion.xmax, worldMax.x);
+				worldMax.z = std::fmax(tmp_goal.targetRegion.zmax, worldMax.z);
+			}
+			else {
+				worldMin.x = std::fmin(tmp_goal.targetLocation.x, worldMin.x);
+				worldMin.z = std::fmin(tmp_goal.targetLocation.z, worldMin.z);
+				worldMax.x = std::fmax(tmp_goal.targetLocation.x, worldMax.x);
+				worldMax.z = std::fmax(tmp_goal.targetLocation.z, worldMax.z);
+			}
+		}
+	}
+
+	std::cout << "all obstacles, agents, and goals in the sim are within";
+	std::cout << " min: " << worldMin.x << " " << worldMin.z;
+	std::cout << " max: " << worldMax.x << " " << worldMax.z << std::endl;
+
+	// pad grid size
+	float distX = worldMax.x - worldMin.x;
+	worldMax.x += distX / 4.0f;
+	worldMin.x -= distX / 4.0f;
+	distX *= 1.5f;
+
+	float distZ = worldMax.z - worldMin.z;
+	worldMax.z += distZ / 4.0f;
+	worldMin.z -= distZ / 4.0f;
+	distZ *= 1.5f;
+
+	// compute resolution so the biggest agent is at most half the cell size in either direction
+	int resX = distX / (biggestAgentRad * 4.0f);
+	int resZ = distZ / (biggestAgentRad * 4.0f);
+
+	m_densityVelocityGrid = new ContinuumGrid(resX, resZ, worldMin, worldMax);
 
 	//std::cout << "finished making grid!" << std::endl;
 
@@ -159,18 +245,16 @@ void ContinuumModule::preprocessSimulation()
 	for (int i = 0; i < num_agents; i++) {
 		m_agents[i]->init(m_densityVelocityGrid);
 	}
-
-
-#if _DEBUG
-	std::cout << "done preprocessing" << std::endl;
-#endif
 }
 
 void ContinuumModule::preprocessFrame(float timeStamp, float dt, unsigned int frameNumber)
 {
-	//std::cout << "preprocess frame..." << std::endl;
+	if (m_densityVelocityGrid == NULL) { // on first frame, set up grids
+		setupGrids();
+	}
+
 	// splat all the agents
-	m_densityVelocityGrid->reset();
+	m_densityVelocityGrid->resetSplats();
 	int num_agents = m_agents.size();
 	for (int i = 0; i < num_agents; i++) {
 		ContinuumAgent *agent = m_agents.at(i);
@@ -179,16 +263,11 @@ void ContinuumModule::preprocessFrame(float timeStamp, float dt, unsigned int fr
 		}
 	}
 	m_densityVelocityGrid->normalizeVelocitiesByDensity();
-	//m_densityVelocityGrid->m_density->printGrid(-1, -1);
-	//std::cout << "preprocess complete!" << std::endl;
 }
 
 void ContinuumModule::postprocessFrame(float timeStamp, float dt, unsigned int frameNumber)
 {
-	//TODO does nothing for now
-#if PRINTS
-	std::cout << "postprocess frame..." << std::endl;
-#endif
+
 }
 
 void ContinuumModule::cleanupSimulation()
