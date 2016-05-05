@@ -143,13 +143,10 @@ void ContinuumModule::preprocessSimulation()
 
 	//std::cout << "making grid" << std::endl;
 
-	// TODO: iterate over everything on the grid ot make an aabb
-	//gSpatialDatabase->
-
-	float min_x = -20.0f;//gSpatialDatabase->getOriginX(); // this doesn't REALLY work. fix it!
-	float min_z = -20.0f;//gSpatialDatabase->getOriginZ();
-	float max_x = 20.0f;//gSpatialDatabase->getGridSizeX() + min_x;
-	float max_z = 20.0f;//gSpatialDatabase->getGridSizeZ() + min_z;
+	float min_x = -25.0f;// gSpatialDatabase->getOriginX(); // this doesn't REALLY work. fix it!
+	float min_z = -25.0f;// gSpatialDatabase->getOriginZ();
+	float max_x = 25.0f;// gSpatialDatabase->getGridSizeX() + min_x;
+	float max_z = 25.0f;// gSpatialDatabase->getGridSizeZ() + min_z;
 
 	std::cout << "world bounds are min: " << min_x << " " << min_z << " max: " << max_x << " " << max_z << std::endl;
 

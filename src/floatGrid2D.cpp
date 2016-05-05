@@ -91,6 +91,12 @@ void float_grid_2D::getIndicesForCoordinate(float x, float z, int &x_cell, int &
 	z_cell = int(coord_localized_z / m_cell_size_z);
 }
 
+void float_grid_2D::getCornerOfIndex(int x_cell, int z_cell, float &x, float &z)
+{
+	x = x_cell * m_cell_size_x + m_min.x;
+	z = z_cell * m_cell_size_z + m_min.z;
+}
+
 void float_grid_2D::cellCenter(float x, float z, float &x_cell, float &z_cell)
 {
 	// return the coordinates of the cell center that this cell is in

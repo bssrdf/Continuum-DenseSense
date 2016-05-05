@@ -15,6 +15,7 @@
 #include "continuumModule.h"
 #include "continuumAgent.h"
 #include "continuumGrid.h"
+#include "floatGrid2D.h"
 
 /**
  * @brief An example agent with very basic AI, that is part of the simpleAI plugin.

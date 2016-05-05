@@ -51,7 +51,7 @@ class PotentialGrid
 public:
 	// center values
 	float_grid_2D *m_potential;
-	float_grid_2D *m_known;
+	float_grid_2D *m_known; // for finite difference fast flood fill
 	// staggered in between cells. ONLY access these by index!
 	// yes, some values will be duplicated, but it'll just be easier to handle this way
 	float_grid_2D *m_d_potential_N;

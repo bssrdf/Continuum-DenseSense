@@ -173,6 +173,9 @@ void ContinuumAgent::updateAI(float timeStamp, float dt, unsigned int frameNumbe
 	else {
 		p_grad.z *= -MAX_SPEED;
 	}
+	if (p_grad.x > 100000.0f || p_grad.z > 100000.0f) {
+		std::cout << "error, out of bounds?" << std::endl;
+	}
 	//std::cout << "positi is " << _position.x << " " << _position.z << std::endl;
 	//
 	//std::cout << "target is " << goal_pos.x << " " << goal_pos.y << std::endl;
@@ -205,6 +208,36 @@ void ContinuumAgent::draw()
 		else {
 			Util::DrawLib::drawAgentDisc(_position, _forward, _radius);
 		}
+
+		Util::Point p1 = Util::Point(); // corner
+		Util::Point p2 = Util::Point();
+		Util::Point p3 = Util::Point();
+		Util::Point p4 = Util::Point();
+		Color shade(0.0f, 0.0f, 0.0f);
+
+		// draw allll the quads
+		float_grid_2D *potenVals = m_potentialGrid->m_potential;
+		for (int x = 0; x < potenVals->m_res_x; x++) {
+			for (int z = 0; z < potenVals->m_res_z; z++) {
+				potenVals->getCornerOfIndex(x, z, p1.x, p1.z);
+				p2.x = p1.x + potenVals->m_res_x;
+				p2.z = p1.z;
+				p3.z = p2.z - potenVals->m_res_z;
+				p3.x = p2.x;
+				p4.x = p3.x - potenVals->m_res_x;
+				p4.z = p3.z;
+				shade.r = potenVals->getByIndex(x, z) / POTENTIAL_MAX;
+				shade.g = potenVals->getByIndex(x, z) / POTENTIAL_MAX;
+				shade.b = potenVals->getByIndex(x, z) / POTENTIAL_MAX;
+
+				shade.r = (float)x / 30.0f;
+				shade.g = (float)z / 30.0f;
+
+				Util::DrawLib::glColor(shade);
+				Util::DrawLib::drawQuad(p1, p2, p3, p4);
+			}
+		}
+
 	}
 	else {
 		Util::DrawLib::drawAgentDisc(_position, _forward, _radius, Util::gGray40);
