@@ -231,24 +231,30 @@ void ContinuumAgent::draw()
 void ContinuumAgent::drawContinuumGrid() {
 	if (m_potentialGrid == NULL) return;
 
-	float_grid_2D *potenVals = m_potentialGrid->m_potential;
+	float_grid_2D *gridVals = m_potentialGrid->m_speeds_densities->m_density;
 
 	Util::Point p1 = Util::Point(); // corner
 	Util::Point p2 = Util::Point();
 	Util::Point p3 = Util::Point();
 	Util::Point p4 = Util::Point();
-	Color shade(0.0f, 0.0f, 0.0f);
-	float cell_margin_x = potenVals->m_cell_size_x / 15.0f;
-	float cell_margin_z = potenVals->m_cell_size_z / 15.0f;
 
-	float cell_size_wMargin_x = potenVals->m_cell_size_x - 2.0f * cell_margin_x;
-	float cell_size_wMargin_z = potenVals->m_cell_size_z - 2.0f * cell_margin_z;
+	Color shade(0.0f, 0.0f, 0.0f);
+	int ix, iz;
+	float maxVal = gridVals->getMaxVal(ix, iz) + 0.001f;
+	
+	float cell_margin_x = gridVals->m_cell_size_x / 15.0f;
+	float cell_margin_z = gridVals->m_cell_size_z / 15.0f;
+
+	float cell_size_wMargin_x = gridVals->m_cell_size_x - 2.0f * cell_margin_x;
+	float cell_size_wMargin_z = gridVals->m_cell_size_z - 2.0f * cell_margin_z;
+
+	float temp_val;
 
 	// draw allll the quads
-	for (int x = 0; x < potenVals->m_res_x; x++) {
-		for (int z = 0; z < potenVals->m_res_z; z++) {
+	for (int x = 0; x < gridVals->m_res_x; x++) {
+		for (int z = 0; z < gridVals->m_res_z; z++) {
 						
-			p1 = potenVals->getCornerOfIndex(x, z);
+			p1 = gridVals->getCornerOfIndex(x, z);
 
 			// create a margin
 			p1.x += cell_margin_x;
@@ -263,12 +269,11 @@ void ContinuumAgent::drawContinuumGrid() {
 			p4.x = p3.x - cell_size_wMargin_x;
 			p4.z = p3.z;
 
-			shade.r = potenVals->getByIndex(x, z) / POTENTIAL_MAX;
-			shade.g = potenVals->getByIndex(x, z) / POTENTIAL_MAX;
-			shade.b = potenVals->getByIndex(x, z) / POTENTIAL_MAX;
+			temp_val = gridVals->getByIndex(x, z);
 
-			shade.r = (float)x / 30.0f;
-			shade.g = (float)z / 30.0f;
+			shade.r = (temp_val / maxVal);
+			shade.g = (temp_val / maxVal);
+			shade.b = (temp_val / maxVal);
 
 			Util::DrawLib::glColor(shade);
 			Util::DrawLib::drawQuad(p4, p3, p2, p1);

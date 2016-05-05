@@ -250,6 +250,18 @@ void ContinuumModule::setupGrids() {
 	for (int i = 0; i < num_agents; i++) {
 		m_agents[i]->init(m_densityVelocityGrid);
 	}
+
+	// splat the obstacles
+	for (std::set<SteerLib::SpatialDatabaseItemPtr>::iterator neighbour = neighborList.begin();
+		neighbour != neighborList.end(); neighbour++)
+	{
+		if (!(*neighbour)->isAgent())
+		{
+			// check the obstacle's AABB
+			tmp_ob = dynamic_cast<SteerLib::ObstacleInterface *>(*neighbour);
+			tmp_bound = tmp_ob->getBounds();
+		}
+	}
 }
 
 void ContinuumModule::preprocessFrame(float timeStamp, float dt, unsigned int frameNumber)

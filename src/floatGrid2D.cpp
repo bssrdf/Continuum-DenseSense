@@ -101,7 +101,7 @@ float float_grid_2D::getMaxVal(int &x, int &z) {
 	float maxVal = -HUGE_VAL;
 	float candidate;
 	for (int ix = 0; ix < m_res_x; ix++) {
-		for (int iz = 0; iz < m_res_z; z++) {
+		for (int iz = 0; iz < m_res_z; iz++) {
 			candidate = getByIndex(ix, iz);
 			if (candidate > maxVal) {
 				maxVal = candidate;
