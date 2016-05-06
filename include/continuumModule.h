@@ -18,6 +18,8 @@
 #include "continuumGrid.h"
 #include "potentialGrid.hpp"
 
+#define SAME_GOAL_DIST 0.3f
+
 
 class ContinuumAgent; // forward declaration
 
@@ -111,6 +113,12 @@ public:
 
 protected:
 	void setupGrids();
+
+	void addGoal(Util::Point goal_p);
+	PotentialGrid* getGridByGoal(Util::Point goal_p);
+
+	std::vector<Util::Point> m_goalPositions;
+	std::vector<PotentialGrid*> m_potentialGrids; // parallel to m_goals
 
 	std::string logFilename; // = "AI.log";
 	bool logStats; // = false;

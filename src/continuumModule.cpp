@@ -248,10 +248,10 @@ void ContinuumModule::setupGrids() {
 
 	//std::cout << "finished making grid!" << std::endl;
 
-	// initialize all the agents properly
-	int num_agents = m_agents.size();
-	for (int i = 0; i < num_agents; i++) {
-		m_agents[i]->init(m_densityVelocityGrid);
+	// init all the agents properly
+	for (int i = 0; i < numAgents; i++) {
+		Util::Point goalP = m_agents[i]->m_allGoalsList[0].targetLocation;
+		m_agents[i]->init(getGridByGoal(goalP));
 	}
 
 	// splat the obstacles
@@ -285,6 +285,12 @@ void ContinuumModule::preprocessFrame(float timeStamp, float dt, unsigned int fr
 	m_densityVelocityGrid->normalizeVelocitiesByDensity();
 	m_densityVelocityGrid->computeSpeedFields();
 	m_densityVelocityGrid->computeCostFields();
+
+	// update the potential grids
+	int numGoals = m_goalPositions.size();
+	for (int i = 0; i < numGoals; i++) {
+		m_potentialGrids[i]->update(m_goalPositions[i]);
+	}
 }
 
 void ContinuumModule::postprocessFrame(float timeStamp, float dt, unsigned int frameNumber)
@@ -352,4 +358,39 @@ void ContinuumModule::destroyAgent( SteerLib::AgentInterface * agent )
 		}
 	}
 	delete agent;
+}
+
+void ContinuumModule::addGoal(Util::Point goal_p) {
+	int numGoals = m_goalPositions.size();
+	for (int i = 0; i < numGoals; i++) {
+		if ((goal_p - m_goalPositions.at(i)).length() < SAME_GOAL_DIST) return;
+	}
+
+	m_goalPositions.push_back(goal_p);
+
+	Util::Point min = m_densityVelocityGrid->m_min;
+	Util::Point max = m_densityVelocityGrid->m_max;
+	int res_x = m_densityVelocityGrid->m_res_x;
+	int res_z = m_densityVelocityGrid->m_res_z;
+	PotentialGrid* newPotenGrid = new PotentialGrid(res_x, res_z, min, max, m_densityVelocityGrid);
+	m_potentialGrids.push_back(newPotenGrid);
+}
+
+PotentialGrid* ContinuumModule::getGridByGoal(Util::Point goal_p) {
+	// if it's unfound, add it
+	int numGoals = m_goalPositions.size();
+	for (int i = 0; i < numGoals; i++) {
+		if ((goal_p - m_goalPositions.at(i)).length() < SAME_GOAL_DIST)
+			return m_potentialGrids[i];
+	}
+
+	m_goalPositions.push_back(goal_p);
+
+	Util::Point min = m_densityVelocityGrid->m_min;
+	Util::Point max = m_densityVelocityGrid->m_max;
+	int res_x = m_densityVelocityGrid->m_res_x;
+	int res_z = m_densityVelocityGrid->m_res_z;
+	PotentialGrid* newPotenGrid = new PotentialGrid(res_x, res_z, min, max, m_densityVelocityGrid);
+	m_potentialGrids.push_back(newPotenGrid);
+	return newPotenGrid;
 }

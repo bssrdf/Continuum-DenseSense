@@ -24,18 +24,12 @@ ContinuumAgent::ContinuumAgent()
 	_enabled = false;
 }
 
-void ContinuumAgent::init(ContinuumGrid *densityVelocityGrid) {
-	Util::Point min = densityVelocityGrid->m_min;
-	Util::Point max = densityVelocityGrid->m_max;
-	int res_x = densityVelocityGrid->m_res_x;
-	int res_z = densityVelocityGrid->m_res_z;
-
-	m_potentialGrid = new PotentialGrid(res_x, res_z, min, max, densityVelocityGrid);
+void ContinuumAgent::init(PotentialGrid *potentialGrid) {
+	m_potentialGrid = potentialGrid;
 }
 
 ContinuumAgent::~ContinuumAgent()
 {
-	if (m_potentialGrid != NULL) delete m_potentialGrid;
 	if (_enabled) {
 		Util::AxisAlignedBox bounds(_position.x-_radius, _position.x+_radius, 0.0f, 0.0f, _position.z-_radius, _position.z+_radius);
 		gSpatialDatabase->removeObject( this, bounds);
@@ -149,7 +143,6 @@ void ContinuumAgent::updateAI(float timeStamp, float dt, unsigned int frameNumbe
 	Util::Point goal_pos = _goalQueue.front().targetLocation;
 	//std::cout << "updating grid with target " << pos.x << " " << pos.y << std::endl;
 
-	m_potentialGrid->update(goal_pos);
 	Util::Vector velocity = m_potentialGrid->interpolateVelocity(_position);// MAX_SPEED;
 	
 	// jitter velocity

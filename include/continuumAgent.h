@@ -36,7 +36,7 @@ class ContinuumAgent : public SteerLib::AgentInterface
 {
 public:
 	ContinuumAgent();
-	void init(ContinuumGrid *densityVelocityGrid);
+	void init(PotentialGrid *potentialGrid);
 	~ContinuumAgent();
 	void reset(const SteerLib::AgentInitialConditions & initialConditions, SteerLib::EngineInterface * engineInfo);
 	void updateAI(float timeStamp, float dt, unsigned int frameNumber);
