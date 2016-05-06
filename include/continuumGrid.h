@@ -7,7 +7,7 @@
 #define COST_SMOOTH 0.00001f
 
 #define SPEED_WEIGHT 1.0f
-#define TIME_WEIGHT 1.0f
+#define TIME_WEIGHT 0.3f
 #define DISCOMFORT_WEIGHT 0.1f
 
 class ContinuumGrid

@@ -152,10 +152,10 @@ void ContinuumAgent::updateAI(float timeStamp, float dt, unsigned int frameNumbe
 	m_potentialGrid->update(goal_pos);
 	Util::Vector velocity = m_potentialGrid->interpolateVelocity(_position);// MAX_SPEED;
 	
-	if (debug) {
-		velocity = m_potentialGrid->interpolateVelocity(_position);// MAX_SPEED;
-	}
-	
+	// jitter velocity
+	velocity.x += ((float)std::rand() - 0.5f * (float)RAND_MAX) / (float) RAND_MAX;
+	velocity.z += ((float)std::rand() - 0.5f * (float)RAND_MAX) / (float)RAND_MAX;
+
 	//velocity = goal_pos - _position;
 	_doEulerStep(velocity, dt);
 
@@ -185,10 +185,9 @@ void ContinuumAgent::draw()
 
 		// draw a debug grid
 		//drawSingleGrid(m_potentialGrid->m_speeds_densities->m_density); // draw density splat
-		
-		//drawAverageSpeeds(); // draw avg speeds
-		
 		drawSingleGrid(m_potentialGrid->m_potential); // draw potential
+
+		//drawAverageSpeeds(); // draw avg speeds
 		
 		/* for drawing costs
 		drawFaceGrid(m_potentialGrid->m_speeds_densities->m_cost_N,
@@ -202,11 +201,11 @@ void ContinuumAgent::draw()
 			m_potentialGrid->m_speeds_densities->m_speed_E,
 			m_potentialGrid->m_speeds_densities->m_speed_W); */
 		
-		/* for drawing potential grad */
+		/* for drawing potential grad
 		drawFaceGrid(m_potentialGrid->m_dPotential_N,
 			m_potentialGrid->m_dPotential_S,
 			m_potentialGrid->m_dPotential_E,
-			m_potentialGrid->m_dPotential_W);
+			m_potentialGrid->m_dPotential_W); */
 		
 		/*
 		drawFaceGrid(m_potentialGrid->m_velocity_N,
