@@ -2,6 +2,7 @@
 
 float_grid_2D::float_grid_2D(int res_x, int res_z, Util::Point min, Util::Point max)
 {
+	m_outOfBounds = 0.0f;
 	m_res_x = res_x;
 	m_res_z = res_z;
 	m_min = min;
@@ -22,7 +23,7 @@ float float_grid_2D::getByIndex(int x, int z)
 	// 0 0  1  2  3
 	// 1 4  5  6  7
 	// 2 8  9  10 11
-	if (x < 0 || x >= m_res_x || z < 0 || z >= m_res_z) return 0.0f;
+	if (x < 0 || x >= m_res_x || z < 0 || z >= m_res_z) return m_outOfBounds;
 	return m_values.at(x + z * m_res_x);
 }
 
@@ -147,6 +148,12 @@ float float_grid_2D::getMinVal() {
 		}
 	}
 	return minVal;
+}
+
+void float_grid_2D::multiplyAll(float m) {
+	for (int i = 0; i < m_res_x * m_res_z; i++) {
+		m_values[i] *= m;
+	}
 }
 
 bool float_grid_2D::inBounds(int x, int z)

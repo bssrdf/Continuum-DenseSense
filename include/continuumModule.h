@@ -16,6 +16,8 @@
 #include "continuumAgent.h"
 #include "floatGrid2D.h"
 #include "continuumGrid.h"
+#include "potentialGrid.hpp"
+
 
 class ContinuumAgent; // forward declaration
 

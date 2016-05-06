@@ -15,6 +15,7 @@
 #include "continuumModule.h"
 #include "continuumAgent.h"
 #include "continuumGrid.h"
+#include "potentialGrid.hpp"
 #include "floatGrid2D.h"
 
 /**
@@ -43,9 +44,9 @@ public:
 	void draw();
 	
 	// for debugging
-	void drawContinuumGrid();
+	void drawSingleGrid(float_grid_2D *gridVals);
 	void drawAverageSpeeds();
-	void drawSpeedOrCostField(bool drawSpeed);
+	void drawFaceGrid(float_grid_2D *gridVals_N, float_grid_2D *gridVals_S, float_grid_2D *gridVals_E, float_grid_2D *gridVals_W);
 
 	bool enabled() const { return _enabled; }
 	Util::Point position() const { return _position; }

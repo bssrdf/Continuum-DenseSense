@@ -6,9 +6,9 @@
 #define DENSITY_MIN 0.00001f // for preventing divide by zero errors
 #define COST_SMOOTH 0.00001f
 
-#define SPEED_WEIGHT 0.9f
-#define TIME_WEIGHT 0.05f
-#define DISCOMFORT_WEIGHT 0.05f
+#define SPEED_WEIGHT 0.7f
+#define TIME_WEIGHT 0.2f
+#define DISCOMFORT_WEIGHT 0.1f
 
 class ContinuumGrid
 {
@@ -60,65 +60,5 @@ public:
 	void computeSpeedFields(); // equation 9, 10
 	void computeCostFields();
 };
-
-struct cell_potential{
-	int x;
-	int z;
-	float potential;
-	bool operator<(const cell_potential& b) const{
-		return potential > b.potential;
-	}
-};
-
-class PotentialGrid
-{
-	/***************************************************************
-	Grid for goal-specific values.
-	
-	At each cell center:
-	-potential
-	
-	At each cell face:
-	-change in potential
-	-velocity from change in potential + speed field on global grid
-	****************************************************************/
-
-
-public:
-	// center values
-	float_grid_2D *m_potential;
-	float_grid_2D *m_known; // for finite difference fast flood fill
-
-	// face values
-	float_grid_2D *m_dPotential_N;
-	float_grid_2D *m_dPotential_S;
-	float_grid_2D *m_dPotential_E;
-	float_grid_2D *m_dPotential_W;
-
-	float_grid_2D *m_velocity_N;
-	float_grid_2D *m_velocity_S;
-	float_grid_2D *m_velocity_E;
-	float_grid_2D *m_velocity_W;
-
-	int m_res_x;
-	int m_res_z;
-
-	ContinuumGrid *m_speeds_densities;
-
-	PotentialGrid(int res_x, int res_z, Util::Point min, Util::Point max, ContinuumGrid *speeds_densities);
-	~PotentialGrid();
-
-	void update(Util::Point goalPosition);
-
-private:
-	//float finiteDifference(int x, int z);
-	//void computeSpeedField();
-	//void computeUnitCosts();
-	//void addCandidates(std::priority_queue<cell_potential> &candidatesPQ, int x, int z);
-	//void splatGoal(Util::Point goalPosition); // handle potential changes as a result of adding a goal
-	//
-	//void computePotentialDeltas(); // called by splatGoal: no need to call this on its own
-};
-
 
 #endif

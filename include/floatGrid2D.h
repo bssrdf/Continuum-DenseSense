@@ -24,6 +24,7 @@ public:
 	float getMaxVal();
 	float getMaxValAbs();
 	float getMinVal();
+	void multiplyAll(float m);
 
 	bool inBounds(int x, int z);
 	bool finBounds(float x, float z);
@@ -35,6 +36,7 @@ public:
 	float m_cell_size_z;
 	Util::Point m_min;
 	Util::Point m_max;
+	float m_outOfBounds;
 };
 
 #endif

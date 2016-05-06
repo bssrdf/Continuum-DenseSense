@@ -149,47 +149,9 @@ void ContinuumAgent::updateAI(float timeStamp, float dt, unsigned int frameNumbe
 	//std::cout << "updating grid with target " << pos.x << " " << pos.y << std::endl;
 
 	m_potentialGrid->update(goal_pos);
-	//m_potentialGrid->m_potential->printGrid(x, z);
-	//std::cout << "done updating grid with target " << pos.x << " " << pos.y << std::endl;
-	// renormalize gradient
-	//float dpW = m_potentialGrid->m_d_potential_W->getByCoordinate(_position.x, _position.z);
-	//float dpN = m_potentialGrid->m_d_potential_N->getByCoordinate(_position.x, _position.z);
-	//float dpS = m_potentialGrid->m_d_potential_S->getByCoordinate(_position.x, _position.z);
-	//float dpE = m_potentialGrid->m_d_potential_E->getByCoordinate(_position.x, _position.z);
-	//
-	//float speedW = m_potentialGrid->m_speed_W->getByCoordinate(_position.x, _position.z);
-	//float speedN = m_potentialGrid->m_speed_N->getByCoordinate(_position.x, _position.z);
-	//float speedS = m_potentialGrid->m_speed_S->getByCoordinate(_position.x, _position.z);
-	//float speedE = m_potentialGrid->m_speed_E->getByCoordinate(_position.x, _position.z);
+	Util::Vector velocity = m_potentialGrid->interpolateVelocity(_position) * 100.0f;
 
-	//Util::Vector p_grad = Util::Vector(dpE - dpW, 0.0f, dpN - dpS);
-	//// multiply by neg speed in direction, since traveling opposite gradient
-	//if (p_grad.x > 0.0f) {
-	//	// going east
-	//	p_grad.x *= -MAX_SPEED;
-	//}
-	//else {
-	//	p_grad.x *= -MAX_SPEED;
-	//}
-	//
-	//if (p_grad.z > 0.0f) {
-	//	// going north
-	//	p_grad.z *= -MAX_SPEED;
-	//}
-	//else {
-	//	p_grad.z *= -MAX_SPEED;
-	//}
-	//if (p_grad.x > 100000.0f || p_grad.z > 100000.0f) {
-	//	std::cout << "error, out of bounds?" << std::endl;
-	//}
-	//std::cout << "positi is " << _position.x << " " << _position.z << std::endl;
-	//
-	//std::cout << "target is " << goal_pos.x << " " << goal_pos.y << std::endl;
-	//std::cout << "speeds are " << speedW << " " << speedN << " " << speedS << " " << speedE << std::endl;
-	//std::cout << "potens are " << dpW << " " << dpN << " " << dpS << " " << dpE << std::endl;
-	//std::cout << "grad is " << p_grad.x << " " << p_grad.z << std::endl;
-
-	_doEulerStep(goal_pos - _position, dt);
+	_doEulerStep(velocity, dt);
 
 }
 
@@ -216,9 +178,31 @@ void ContinuumAgent::draw()
 		}
 
 		// draw a debug grid
-		//drawContinuumGrid();
-		drawAverageSpeeds();
-		drawSpeedOrCostField(false);
+		//drawSingleGrid(m_potentialGrid->m_speeds_densities->m_density);
+		//drawAverageSpeeds();
+		/*
+		drawFaceGrid(m_potentialGrid->m_speeds_densities->m_cost_N,
+			m_potentialGrid->m_speeds_densities->m_cost_S,
+			m_potentialGrid->m_speeds_densities->m_cost_E,
+			m_potentialGrid->m_speeds_densities->m_cost_W);*/
+		/*
+		drawFaceGrid(m_potentialGrid->m_speeds_densities->m_speed_N,
+			m_potentialGrid->m_speeds_densities->m_speed_S,
+			m_potentialGrid->m_speeds_densities->m_speed_E,
+			m_potentialGrid->m_speeds_densities->m_speed_W);*/
+		/*
+		drawFaceGrid(m_potentialGrid->m_dPotential_N,
+			m_potentialGrid->m_dPotential_S,
+			m_potentialGrid->m_dPotential_E,
+			m_potentialGrid->m_dPotential_W); */
+		
+		/**/
+		drawFaceGrid(m_potentialGrid->m_velocity_N,
+			m_potentialGrid->m_velocity_S,
+			m_potentialGrid->m_velocity_E,
+			m_potentialGrid->m_velocity_W);
+
+		drawSingleGrid(m_potentialGrid->m_potential);
 	}
 	else {
 		Util::DrawLib::drawAgentDisc(_position, _forward, _radius, Util::gGray40);
@@ -229,10 +213,8 @@ void ContinuumAgent::draw()
 #endif
 }
 
-void ContinuumAgent::drawContinuumGrid() {
-	if (m_potentialGrid == NULL) return;
-
-	float_grid_2D *gridVals = m_potentialGrid->m_speeds_densities->m_density;
+void ContinuumAgent::drawSingleGrid(float_grid_2D *gridVals) {
+	if (gridVals == NULL) return;
 
 	Util::Point p1 = Util::Point(); // corner
 	Util::Point p2 = Util::Point();
@@ -338,20 +320,13 @@ void ContinuumAgent::drawAverageSpeeds() {
 	}
 }
 
-void ContinuumAgent::drawSpeedOrCostField(bool drawSpeed) {
+void ContinuumAgent::drawFaceGrid(float_grid_2D *gridVals_N, float_grid_2D *gridVals_S, float_grid_2D *gridVals_E, float_grid_2D *gridVals_W) {
 	if (m_potentialGrid == NULL) return;
 
-	float_grid_2D *gridVals_N = m_potentialGrid->m_speeds_densities->m_speed_N;
-	float_grid_2D *gridVals_S = m_potentialGrid->m_speeds_densities->m_speed_S;
-	float_grid_2D *gridVals_E = m_potentialGrid->m_speeds_densities->m_speed_E;
-	float_grid_2D *gridVals_W = m_potentialGrid->m_speeds_densities->m_speed_W;
-
-	if (!drawSpeed) {
-		gridVals_N = m_potentialGrid->m_speeds_densities->m_cost_N;
-		gridVals_S = m_potentialGrid->m_speeds_densities->m_cost_S;
-		gridVals_E = m_potentialGrid->m_speeds_densities->m_cost_E;
-		gridVals_W = m_potentialGrid->m_speeds_densities->m_cost_W;
-	}
+	if (gridVals_N == NULL ||
+		gridVals_S == NULL ||
+		gridVals_E == NULL ||
+		gridVals_W == NULL) return;
 
 	Util::Point p_N = Util::Point();
 	Util::Point p_S = Util::Point();
@@ -371,7 +346,7 @@ void ContinuumAgent::drawSpeedOrCostField(bool drawSpeed) {
 	float halfCell_x = gridVals_N->m_cell_size_x / 2.0f;
 	float halfCell_z = gridVals_N->m_cell_size_z / 2.0f;
 
-	// draw allll the quads
+	// draw allll the thingies
 	for (int x = 0; x < gridVals_N->m_res_x; x++) {
 		for (int z = 0; z < gridVals_N->m_res_z; z++) {
 
@@ -381,7 +356,7 @@ void ContinuumAgent::drawSpeedOrCostField(bool drawSpeed) {
 
 			// draw north
 			p_N = center;
-			p_N.z += halfCell_z * 0.75f;
+			p_N.z += halfCell_z * 0.5f;
 			f_N = gridVals_N->getByIndex(x, z);
 			shade = Color(0.0f, 0.0f, 0.0f);
 			if (f_N < 0.0f) {
@@ -394,7 +369,7 @@ void ContinuumAgent::drawSpeedOrCostField(bool drawSpeed) {
 
 			// draw south
 			p_S = center;
-			p_S.z -= halfCell_z * 0.75f;
+			p_S.z -= halfCell_z * 0.5f;
 			f_S = gridVals_S->getByIndex(x, z);
 			shade = Color(0.0f, 0.0f, 0.0f);
 			if (f_N < 0.0f) {
@@ -407,7 +382,7 @@ void ContinuumAgent::drawSpeedOrCostField(bool drawSpeed) {
 
 			// draw East
 			p_E = center;
-			p_E.x += halfCell_x * 0.75f;
+			p_E.x += halfCell_x * 0.5f;
 			f_E = gridVals_E->getByIndex(x, z);
 			shade = Color(0.0f, 0.0f, 0.0f);
 			if (f_E < 0.0f) {
@@ -421,7 +396,7 @@ void ContinuumAgent::drawSpeedOrCostField(bool drawSpeed) {
 
 			// draw West
 			p_W = center;
-			p_W.x -= halfCell_x * 0.75f;
+			p_W.x -= halfCell_x * 0.5f;
 			f_W = gridVals_W->getByIndex(x, z);
 			shade = Color(0.0f, 0.0f, 0.0f);
 			if (f_W < 0.0f) {
@@ -436,6 +411,7 @@ void ContinuumAgent::drawSpeedOrCostField(bool drawSpeed) {
 		}
 	}
 }
+
 
 void ContinuumAgent::_doEulerStep(const Util::Vector & steeringDecisionForce, float dt)
 {
