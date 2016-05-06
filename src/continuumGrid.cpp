@@ -148,6 +148,7 @@ void ContinuumGrid::computeSpeedFields() {
 	float f_v; // speed field value from sampling next cell over
 	float p_n; // pressure in next cell over
 	float f; // speed field computation
+	float f_t = -0.1f; // terrain speed anywhere is just -0.1f: you should always be happy moving away from your cell
 
 	for (int x = 0; x < m_res_x; x++) {
 		for (int z = 0; z < m_res_z; z++) {
@@ -156,25 +157,25 @@ void ContinuumGrid::computeSpeedFields() {
 			// North, aka z+
 			f_v = m_avg_vel_z->getByIndex(x, z + 1);
 			p_n = m_density->getByIndex(  x, z + 1);
-			f = f_v * (p_n - p_min) / (p_max - p_min);
+			f = f_t + (p_n - p_min) / (p_max - p_min) * (f_v - f_t);
 			m_speed_N->setByIndex(x, z, f);
 
 			// South, aka z-
 			f_v = m_avg_vel_z->getByIndex(x, z - 1) * -1.0f; // dot product with [0, -1]
 			p_n = m_density->getByIndex(  x, z - 1);
-			f = f_v * (p_n - p_min) / (p_max - p_min);
+			f = f_t + (p_n - p_min) / (p_max - p_min) * (f_v - f_t);
 			m_speed_S->setByIndex(x, z, f);
 
 			// East, aka x+
 			f_v = m_avg_vel_x->getByIndex(x + 1, z);
 			p_n = m_density->getByIndex(  x + 1, z);
-			f = f_v * (p_n - p_min) / (p_max - p_min);
+			f = f_t + (p_n - p_min) / (p_max - p_min) * (f_v - f_t);
 			m_speed_E->setByIndex(x, z, f);
 
 			// West, aka x-
 			f_v = m_avg_vel_x->getByIndex(x - 1, z) * -1.0f; // dot product with [-1, 0]
 			p_n = m_density->getByIndex(  x - 1, z);
-			f = f_v * (p_n - p_min) / (p_max - p_min);
+			f = f_t + (p_n - p_min) / (p_max - p_min) * (f_v - f_t);
 			m_speed_W->setByIndex(x, z, f);
 		}
 	}

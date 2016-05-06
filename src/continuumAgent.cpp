@@ -150,7 +150,7 @@ void ContinuumAgent::updateAI(float timeStamp, float dt, unsigned int frameNumbe
 
 	m_potentialGrid->update(goal_pos);
 	Util::Vector velocity = m_potentialGrid->interpolateVelocity(_position) * 100.0f;
-
+	//velocity = goal_pos - _position;
 	_doEulerStep(velocity, dt);
 
 }
@@ -178,9 +178,9 @@ void ContinuumAgent::draw()
 		}
 
 		// draw a debug grid
-		//drawSingleGrid(m_potentialGrid->m_speeds_densities->m_density);
+		drawSingleGrid(m_potentialGrid->m_speeds_densities->m_density);
 		//drawAverageSpeeds();
-		drawSingleGrid(m_potentialGrid->m_potential);
+		//drawSingleGrid(m_potentialGrid->m_potential);
 		/* for drawing costs
 		drawFaceGrid(m_potentialGrid->m_speeds_densities->m_cost_N,
 			m_potentialGrid->m_speeds_densities->m_cost_S,
