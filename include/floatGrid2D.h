@@ -21,6 +21,9 @@ public:
 	Util::Point getCornerOfIndex(int x_cell, int z_cell);
 	Util::Point getCellCenter(float x, float z);
 	float getMaxVal(int &x, int &z);
+	float getMaxVal();
+	float getMaxValAbs();
+	float getMinVal();
 
 	bool inBounds(int x, int z);
 	bool finBounds(float x, float z);

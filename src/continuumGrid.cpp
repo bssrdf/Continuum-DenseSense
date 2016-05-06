@@ -3,6 +3,8 @@
 ContinuumGrid::ContinuumGrid(int res_x, int res_z, Util::Point min, Util::Point max)
 {
 	m_density = new float_grid_2D(res_x, res_z, min, max);
+	m_discomfort = new float_grid_2D(res_x, res_z, min, max);
+
 	m_avg_vel_x = new float_grid_2D(res_x, res_z, min, max);
 	m_avg_vel_z = new float_grid_2D(res_x, res_z, min, max);
 
@@ -25,6 +27,7 @@ ContinuumGrid::ContinuumGrid(int res_x, int res_z, Util::Point min, Util::Point 
 ContinuumGrid::~ContinuumGrid()
 {
 	delete m_density;
+	delete m_discomfort;
 	delete m_avg_vel_x;
 	delete m_avg_vel_z;
 
@@ -41,9 +44,12 @@ ContinuumGrid::~ContinuumGrid()
 
 void ContinuumGrid::resetSplats()
 {
-	m_density->clear(0.0f);
+	m_density->clear(DENSITY_MIN); // to prevent div by zero errors
 	m_avg_vel_x->clear(0.0f);
 	m_avg_vel_z->clear(0.0f);
+
+	// for now
+	m_discomfort->clear(0.0f);
 }
 
 void ContinuumGrid::splatAgent(Util::Point agentPosition, Util::Vector agentVelocity)
@@ -119,6 +125,97 @@ void ContinuumGrid::normalizeVelocitiesByDensity()
 
 			sum_v_z = m_avg_vel_z->getByIndex(x, z);
 			m_avg_vel_z->setByIndex(x, z, sum_v_z / sum_p);
+		}
+	}
+}
+
+void ContinuumGrid::computeSpeedFields() {
+	// for every face in every cell, compute flow speed into the next cell
+	
+	// EQ9: f_v(x, theta) = v(x + rn_theta) dot n_theta
+
+	// since we're doing this on a mac grid, this basically means:
+	// - sample the velocity component in this direction in the next grid over
+	
+	// EQ10: f(x, theta) = ((p(x + rn_theta) - pmin) / (pmax - pmin)) * f_v
+	// - sample the density in the next cell over
+
+	// we're not doing topographical speed
+
+	float p_max = m_density->getMaxVal();
+	float p_min = m_density->getMinVal();
+
+	float f_v; // speed field value from sampling next cell over
+	float p_n; // pressure in next cell over
+	float f; // speed field computation
+
+	for (int x = 0; x < m_res_x; x++) {
+		for (int z = 0; z < m_res_z; z++) {
+			// don't need to worry about boundary conditions: out of bounds returns 0.0f
+
+			// North, aka z+
+			f_v = m_avg_vel_z->getByIndex(x, z + 1);
+			p_n = m_density->getByIndex(  x, z + 1);
+			f = f_v * (p_n - p_min) / (p_max - p_min);
+			m_speed_N->setByIndex(x, z, f);
+
+			// South, aka z-
+			f_v = m_avg_vel_z->getByIndex(x, z - 1) * -1.0f; // dot product with [0, -1]
+			p_n = m_density->getByIndex(  x, z - 1);
+			f = f_v * (p_n - p_min) / (p_max - p_min);
+			m_speed_S->setByIndex(x, z, f);
+
+			// East, aka x+
+			f_v = m_avg_vel_x->getByIndex(x + 1, z);
+			p_n = m_density->getByIndex(  x + 1, z);
+			f = f_v * (p_n - p_min) / (p_max - p_min);
+			m_speed_E->setByIndex(x, z, f);
+
+			// West, aka x-
+			f_v = m_avg_vel_x->getByIndex(x - 1, z) * -1.0f; // dot product with [-1, 0]
+			p_n = m_density->getByIndex(  x - 1, z);
+			f = f_v * (p_n - p_min) / (p_max - p_min);
+			m_speed_W->setByIndex(x, z, f);
+		}
+	}
+}
+
+void ContinuumGrid::computeCostFields() {
+	// equation 4. also anisotropic.
+	// C = (alpha * flowSpeed + beta + delta * discomfort) / flowSpeed
+	// essentially, cost of moving from this cell to the next
+	// it's worse for you if you're moving into a cell that has velocity flowing in the opposite dir
+	// should this be negative or positive? paper equations indicate negative, use a dot product
+	
+	float f; // speed field value -> anisotropic
+	float g; // discomfort
+	float c; // cost -> anisotropic
+
+	for (int x = 0; x < m_res_x; x++) {
+		for (int z = 0; z < m_res_z; z++) {
+			// don't need to worry about boundary conditions: out of bounds returns 0.0f
+
+			g = m_discomfort->getByIndex(x, z);
+
+			// North, aka z+
+			f = m_speed_N->getByIndex(x, z) + COST_SMOOTH;
+			c = (SPEED_WEIGHT * f + TIME_WEIGHT + DISCOMFORT_WEIGHT * g) / f;
+			m_cost_N->setByIndex(x, z, c);
+
+			// South, aka z-
+			f = m_speed_S->getByIndex(x, z) - COST_SMOOTH;
+			c = (SPEED_WEIGHT * f + TIME_WEIGHT + DISCOMFORT_WEIGHT * g) / f;
+			m_cost_S->setByIndex(x, z, c);
+
+			// East, aka x+
+			f = m_speed_E->getByIndex(x, z) + COST_SMOOTH;
+			c = (SPEED_WEIGHT * f + TIME_WEIGHT + DISCOMFORT_WEIGHT * g) / f;
+			m_cost_E->setByIndex(x, z, c);
+
+			// West, aka x-
+			f = m_speed_W->getByIndex(x, z) - COST_SMOOTH;
+			c = (SPEED_WEIGHT * f + TIME_WEIGHT + DISCOMFORT_WEIGHT * g) / f;
+			m_cost_W->setByIndex(x, z, c);
 		}
 	}
 }

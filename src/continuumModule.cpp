@@ -280,6 +280,8 @@ void ContinuumModule::preprocessFrame(float timeStamp, float dt, unsigned int fr
 		}
 	}
 	m_densityVelocityGrid->normalizeVelocitiesByDensity();
+	m_densityVelocityGrid->computeSpeedFields();
+	m_densityVelocityGrid->computeCostFields();
 }
 
 void ContinuumModule::postprocessFrame(float timeStamp, float dt, unsigned int frameNumber)

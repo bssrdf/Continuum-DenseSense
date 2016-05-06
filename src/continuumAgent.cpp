@@ -216,8 +216,9 @@ void ContinuumAgent::draw()
 		}
 
 		// draw a debug grid
-		drawContinuumGrid();
-
+		//drawContinuumGrid();
+		drawAverageSpeeds();
+		drawSpeedOrCostField(false);
 	}
 	else {
 		Util::DrawLib::drawAgentDisc(_position, _forward, _radius, Util::gGray40);
@@ -239,8 +240,7 @@ void ContinuumAgent::drawContinuumGrid() {
 	Util::Point p4 = Util::Point();
 
 	Color shade(0.0f, 0.0f, 0.0f);
-	int ix, iz;
-	float maxVal = gridVals->getMaxVal(ix, iz) + 0.001f;
+	float maxVal = gridVals->getMaxVal() + 0.001f;
 	
 	float cell_margin_x = gridVals->m_cell_size_x / 15.0f;
 	float cell_margin_z = gridVals->m_cell_size_z / 15.0f;
@@ -277,6 +277,162 @@ void ContinuumAgent::drawContinuumGrid() {
 
 			Util::DrawLib::glColor(shade);
 			Util::DrawLib::drawQuad(p4, p3, p2, p1);
+		}
+	}
+}
+
+void ContinuumAgent::drawAverageSpeeds() {
+	if (m_potentialGrid == NULL) return;
+
+	float_grid_2D *gridVals_x = m_potentialGrid->m_speeds_densities->m_avg_vel_x;
+	float_grid_2D *gridVals_z = m_potentialGrid->m_speeds_densities->m_avg_vel_z;
+
+	Util::Point p1 = Util::Point(); // corner
+	Util::Point p2 = Util::Point();
+	Util::Point p3 = Util::Point();
+	Util::Point p4 = Util::Point();
+
+	Color shade(0.0f, 0.0f, 0.0f);
+	int ix, iz;
+	float maxVal_x = gridVals_x->getMaxVal(ix, iz) + 0.001f;
+	float maxVal_z = gridVals_z->getMaxVal(ix, iz) + 0.001f;
+
+	float cell_margin_x = gridVals_x->m_cell_size_x / 15.0f;
+	float cell_margin_z = gridVals_z->m_cell_size_z / 15.0f;
+
+	float cell_size_wMargin_x = gridVals_x->m_cell_size_x - 2.0f * cell_margin_x;
+	float cell_size_wMargin_z = gridVals_z->m_cell_size_z - 2.0f * cell_margin_z;
+
+	float temp_val_x;
+	float temp_val_z;
+
+	// draw allll the quads
+	for (int x = 0; x < gridVals_x->m_res_x; x++) {
+		for (int z = 0; z < gridVals_x->m_res_z; z++) {
+
+			p1 = gridVals_x->getCornerOfIndex(x, z);
+
+			// create a margin
+			p1.x += cell_margin_x;
+			p1.z += cell_margin_z;
+
+			p2.x = p1.x + cell_size_wMargin_x;
+			p2.z = p1.z;
+
+			p3.x = p2.x;
+			p3.z = p2.z + cell_size_wMargin_z;
+
+			p4.x = p3.x - cell_size_wMargin_x;
+			p4.z = p3.z;
+
+			temp_val_x = abs(gridVals_x->getByIndex(x, z));
+			temp_val_z = abs(gridVals_z->getByIndex(x, z));
+
+			shade.r = (temp_val_x / maxVal_x);
+			shade.g = 0.0f;
+			shade.b = (temp_val_z / maxVal_z);
+
+			Util::DrawLib::glColor(shade);
+			Util::DrawLib::drawQuad(p4, p3, p2, p1);
+		}
+	}
+}
+
+void ContinuumAgent::drawSpeedOrCostField(bool drawSpeed) {
+	if (m_potentialGrid == NULL) return;
+
+	float_grid_2D *gridVals_N = m_potentialGrid->m_speeds_densities->m_speed_N;
+	float_grid_2D *gridVals_S = m_potentialGrid->m_speeds_densities->m_speed_S;
+	float_grid_2D *gridVals_E = m_potentialGrid->m_speeds_densities->m_speed_E;
+	float_grid_2D *gridVals_W = m_potentialGrid->m_speeds_densities->m_speed_W;
+
+	if (!drawSpeed) {
+		gridVals_N = m_potentialGrid->m_speeds_densities->m_cost_N;
+		gridVals_S = m_potentialGrid->m_speeds_densities->m_cost_S;
+		gridVals_E = m_potentialGrid->m_speeds_densities->m_cost_E;
+		gridVals_W = m_potentialGrid->m_speeds_densities->m_cost_W;
+	}
+
+	Util::Point p_N = Util::Point();
+	Util::Point p_S = Util::Point();
+	Util::Point p_E = Util::Point();
+	Util::Point p_W = Util::Point();
+	Util::Point center;
+
+	float f_N, f_S, f_E, f_W;
+
+	Color shade(0.0f, 0.0f, 0.0f);
+	int ix, iz;
+	float maxVal_N = gridVals_N->getMaxValAbs() + 0.001f;
+	float maxVal_S = gridVals_S->getMaxValAbs() + 0.001f;
+	float maxVal_E = gridVals_E->getMaxValAbs() + 0.001f;
+	float maxVal_W = gridVals_W->getMaxValAbs() + 0.001f;
+
+	float halfCell_x = gridVals_N->m_cell_size_x / 2.0f;
+	float halfCell_z = gridVals_N->m_cell_size_z / 2.0f;
+
+	// draw allll the quads
+	for (int x = 0; x < gridVals_N->m_res_x; x++) {
+		for (int z = 0; z < gridVals_N->m_res_z; z++) {
+
+			center = gridVals_N->getCornerOfIndex(x, z);
+			center.x += halfCell_x;
+			center.z += halfCell_z;
+
+			// draw north
+			p_N = center;
+			p_N.z += halfCell_z * 0.75f;
+			f_N = gridVals_N->getByIndex(x, z);
+			shade = Color(0.0f, 0.0f, 0.0f);
+			if (f_N < 0.0f) {
+				shade.r = fabs(f_N) / maxVal_N;
+			}
+			else {
+				shade.b = fabs(f_N) / maxVal_N;
+			}
+			Util::DrawLib::drawCircle(p_N, shade, halfCell_z / 4.0f);
+
+			// draw south
+			p_S = center;
+			p_S.z -= halfCell_z * 0.75f;
+			f_S = gridVals_S->getByIndex(x, z);
+			shade = Color(0.0f, 0.0f, 0.0f);
+			if (f_N < 0.0f) {
+				shade.r = fabs(f_S) / maxVal_S;
+			}
+			else {
+				shade.b = fabs(f_S) / maxVal_S;
+			}
+			Util::DrawLib::drawCircle(p_S, shade, halfCell_z / 4.0f);
+
+			// draw East
+			p_E = center;
+			p_E.x += halfCell_x * 0.75f;
+			f_E = gridVals_E->getByIndex(x, z);
+			shade = Color(0.0f, 0.0f, 0.0f);
+			if (f_E < 0.0f) {
+				shade.r = fabs(f_E) / maxVal_E;
+				shade.b = fabs(f_E) / maxVal_E;
+			}
+			else {
+				shade.g = fabs(f_E) / maxVal_E;
+			}
+			Util::DrawLib::drawCircle(p_E, shade, halfCell_x / 4.0f);
+
+			// draw West
+			p_W = center;
+			p_W.x -= halfCell_x * 0.75f;
+			f_W = gridVals_W->getByIndex(x, z);
+			shade = Color(0.0f, 0.0f, 0.0f);
+			if (f_W < 0.0f) {
+				shade.r = fabs(f_W) / maxVal_W;
+				shade.b = fabs(f_W) / maxVal_W;
+			}
+			else {
+				shade.g = fabs(f_W) / maxVal_W;
+			}
+			Util::DrawLib::drawCircle(p_W, shade, halfCell_x / 4.0f);
+
 		}
 	}
 }

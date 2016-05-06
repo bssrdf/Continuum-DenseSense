@@ -22,7 +22,7 @@ float float_grid_2D::getByIndex(int x, int z)
 	// 0 0  1  2  3
 	// 1 4  5  6  7
 	// 2 8  9  10 11
-	if (x < 0 || x >= m_res_x || z < 0 || z >= m_res_z) return -HUGE_VAL;
+	if (x < 0 || x >= m_res_x || z < 0 || z >= m_res_z) return 0.0f;
 	return m_values.at(x + z * m_res_x);
 }
 
@@ -111,6 +111,42 @@ float float_grid_2D::getMaxVal(int &x, int &z) {
 		}
 	}
 	return maxVal;
+}
+
+float float_grid_2D::getMaxVal() {
+	float maxVal = -HUGE_VAL;
+	float candidate;
+	for (int ix = 0; ix < m_res_x; ix++) {
+		for (int iz = 0; iz < m_res_z; iz++) {
+			candidate = getByIndex(ix, iz);
+			maxVal = std::fmax(maxVal, candidate);
+		}
+	}
+	return maxVal;
+}
+
+float float_grid_2D::getMaxValAbs() {
+	float maxVal = -HUGE_VAL;
+	float candidate;
+	for (int ix = 0; ix < m_res_x; ix++) {
+		for (int iz = 0; iz < m_res_z; iz++) {
+			candidate = fabs(getByIndex(ix, iz));
+			maxVal = std::fmax(maxVal, candidate);
+		}
+	}
+	return maxVal;
+}
+
+float float_grid_2D::getMinVal() {
+	float minVal = HUGE_VAL;
+	float candidate;
+	for (int ix = 0; ix < m_res_x; ix++) {
+		for (int iz = 0; iz < m_res_z; iz++) {
+			candidate = getByIndex(ix, iz);
+			minVal = std::fmin(minVal, candidate);
+		}
+	}
+	return minVal;
 }
 
 bool float_grid_2D::inBounds(int x, int z)

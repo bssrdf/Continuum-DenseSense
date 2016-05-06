@@ -30,9 +30,9 @@ TODO:
 Algorithm
 0) splat obstacles onto discomfort grid -> precomputation on sim init, basically. do this like agent density splatting.
 
-1) splat agents onto density grid and avg_velocity grids -> section 4.1 + equation 7
-2) compute anisotrop flow speed INTO each neighbor -> equation 9, 10
-3) compute anisotrop cost INTO each neighbor -> equation 4. see section 4.2, beware typos
+1) splat agents onto density grid and avg_velocity grids -> section 4.1 + equation 7 [done]
+2) compute anisotrop flow speed INTO each neighbor -> equation 9, 10 [done]
+3) compute anisotrop cost INTO each neighbor -> equation 4. see section 4.2, beware typos [done]
 4) compute potential field with fast flood fill
 5) compute dPotential, renormalize -> I'm guessing... divide everything by max so grad tops out at 1?
 6) compute velocity at each wall with anisotropic speed selected by direction of dPotential

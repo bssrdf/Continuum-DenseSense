@@ -41,7 +41,11 @@ public:
 	void updateAI(float timeStamp, float dt, unsigned int frameNumber);
 	void disable();
 	void draw();
-	void drawContinuumGrid(); // for debugging
+	
+	// for debugging
+	void drawContinuumGrid();
+	void drawAverageSpeeds();
+	void drawSpeedOrCostField(bool drawSpeed);
 
 	bool enabled() const { return _enabled; }
 	Util::Point position() const { return _position; }
