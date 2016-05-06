@@ -140,9 +140,7 @@ void ContinuumGrid::computeSpeedFields() {
 	// EQ10: f(x, theta) = ((p(x + rn_theta) - pmin) / (pmax - pmin)) * f_v
 	// - sample the density in the next cell over
 
-	// we're not doing topographical speed
-
-	float p_max = m_density->getMaxVal();
+	float p_max = std::fmax(0.99f, m_density->getMaxVal());
 	float p_min = m_density->getMinVal();
 
 	float f_v; // speed field value from sampling next cell over
@@ -199,22 +197,22 @@ void ContinuumGrid::computeCostFields() {
 			g = m_discomfort->getByIndex(x, z);
 
 			// North, aka z+
-			f = m_speed_N->getByIndex(x, z) + COST_SMOOTH;
+			f = m_speed_N->getByIndex(x, z);// +COST_SMOOTH;
 			c = (SPEED_WEIGHT * f + TIME_WEIGHT + DISCOMFORT_WEIGHT * g) / f;
 			m_cost_N->setByIndex(x, z, c);
 
 			// South, aka z-
-			f = m_speed_S->getByIndex(x, z) - COST_SMOOTH;
+			f = m_speed_S->getByIndex(x, z);// -COST_SMOOTH;
 			c = (SPEED_WEIGHT * f + TIME_WEIGHT + DISCOMFORT_WEIGHT * g) / f;
 			m_cost_S->setByIndex(x, z, c);
 
 			// East, aka x+
-			f = m_speed_E->getByIndex(x, z) + COST_SMOOTH;
+			f = m_speed_E->getByIndex(x, z);// +COST_SMOOTH;
 			c = (SPEED_WEIGHT * f + TIME_WEIGHT + DISCOMFORT_WEIGHT * g) / f;
 			m_cost_E->setByIndex(x, z, c);
 
 			// West, aka x-
-			f = m_speed_W->getByIndex(x, z) - COST_SMOOTH;
+			f = m_speed_W->getByIndex(x, z);// -COST_SMOOTH;
 			c = (SPEED_WEIGHT * f + TIME_WEIGHT + DISCOMFORT_WEIGHT * g) / f;
 			m_cost_W->setByIndex(x, z, c);
 		}

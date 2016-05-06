@@ -59,7 +59,7 @@ void ContinuumAgent::reset(const SteerLib::AgentInitialConditions & initialCondi
 	_position = initialConditions.position;
 	_forward = initialConditions.direction;
 	_radius = initialConditions.radius;
-	_velocity = initialConditions.speed * Util::normalize(initialConditions.direction);
+	//_velocity = initialConditions.speed * Util::normalize(initialConditions.direction);
 
 	// compute the "new" bounding box of the agent
 	Util::AxisAlignedBox newBounds(_position.x-_radius, _position.x+_radius, 0.0f, 0.0f, _position.z-_radius, _position.z+_radius);
@@ -98,10 +98,10 @@ void ContinuumAgent::reset(const SteerLib::AgentInitialConditions & initialCondi
 	}
 
 	// agent starts off traveling towards goal at max speed
-	if (!_goalQueue.empty()) {
-		Util::Vector vectorToGoal = _goalQueue.front().targetLocation - _position;
-		_velocity = (vectorToGoal / vectorToGoal.norm()) * MAX_SPEED;
-	}
+	//if (!_goalQueue.empty()) {
+		//Util::Vector vectorToGoal = _goalQueue.front().targetLocation - _position;
+		//_velocity = (vectorToGoal / vectorToGoal.norm()) * MAX_SPEED;
+	//}
 
 	assert(_forward.length()!=0.0f);
 	assert(_goalQueue.size() != 0);
@@ -129,7 +129,7 @@ void ContinuumAgent::updateAI(float timeStamp, float dt, unsigned int frameNumbe
 
 	// it is up to the agent to decide what it means to have "accomplished" or "completed" a goal.
 	// for the simple AI, if the agent's distance to its goal is less than its radius, then the agent has reached the goal.
-	if (vectorToGoal.lengthSquared() < _radius * _radius) {
+	if (vectorToGoal.lengthSquared() < m_potentialGrid->m_potential->m_cell_size_x * m_potentialGrid->m_potential->m_cell_size_z) {
 		_goalQueue.pop();
 		if (_goalQueue.size() != 0) {
 			// in this case, there are still more goals, so start steering to the next goal.
@@ -149,7 +149,7 @@ void ContinuumAgent::updateAI(float timeStamp, float dt, unsigned int frameNumbe
 	//std::cout << "updating grid with target " << pos.x << " " << pos.y << std::endl;
 
 	m_potentialGrid->update(goal_pos);
-	Util::Vector velocity = m_potentialGrid->interpolateVelocity(_position) * 100.0f;
+	Util::Vector velocity = m_potentialGrid->interpolateVelocity(_position) * 100.0f;// MAX_SPEED;
 	//velocity = goal_pos - _position;
 	_doEulerStep(velocity, dt);
 
@@ -178,19 +178,24 @@ void ContinuumAgent::draw()
 		}
 
 		// draw a debug grid
-		drawSingleGrid(m_potentialGrid->m_speeds_densities->m_density);
-		//drawAverageSpeeds();
-		//drawSingleGrid(m_potentialGrid->m_potential);
+		//drawSingleGrid(m_potentialGrid->m_speeds_densities->m_density); // draw density splat
+		
+		//drawAverageSpeeds(); // draw avg speeds
+		
+		drawSingleGrid(m_potentialGrid->m_potential); // draw potential
+		
 		/* for drawing costs
 		drawFaceGrid(m_potentialGrid->m_speeds_densities->m_cost_N,
 			m_potentialGrid->m_speeds_densities->m_cost_S,
 			m_potentialGrid->m_speeds_densities->m_cost_E,
 			m_potentialGrid->m_speeds_densities->m_cost_W); */
-		/* for drawing anisotropic speeds */
+
+		/* for drawing anisotropic speeds
 		drawFaceGrid(m_potentialGrid->m_speeds_densities->m_speed_N,
 			m_potentialGrid->m_speeds_densities->m_speed_S,
 			m_potentialGrid->m_speeds_densities->m_speed_E,
-			m_potentialGrid->m_speeds_densities->m_speed_W);
+			m_potentialGrid->m_speeds_densities->m_speed_W); */
+		
 		/*
 		drawFaceGrid(m_potentialGrid->m_dPotential_N,
 			m_potentialGrid->m_dPotential_S,
@@ -201,7 +206,7 @@ void ContinuumAgent::draw()
 		drawFaceGrid(m_potentialGrid->m_velocity_N,
 			m_potentialGrid->m_velocity_S,
 			m_potentialGrid->m_velocity_E,
-			m_potentialGrid->m_velocity_W); */
+			m_potentialGrid->m_velocity_W);*/
 
 	}
 	else {
@@ -387,10 +392,9 @@ void ContinuumAgent::drawFaceGrid(float_grid_2D *gridVals_N, float_grid_2D *grid
 			shade = Color(0.0f, 0.0f, 0.0f);
 			if (f_E < 0.0f) {
 				shade.r = fabs(f_E) / maxVal_E;
-				shade.b = fabs(f_E) / maxVal_E;
 			}
 			else {
-				shade.g = fabs(f_E) / maxVal_E;
+				shade.b = fabs(f_E) / maxVal_E;
 			}
 			Util::DrawLib::drawCircle(p_E, shade, halfCell_x / 4.0f);
 
@@ -401,10 +405,9 @@ void ContinuumAgent::drawFaceGrid(float_grid_2D *gridVals_N, float_grid_2D *grid
 			shade = Color(0.0f, 0.0f, 0.0f);
 			if (f_W < 0.0f) {
 				shade.r = fabs(f_W) / maxVal_W;
-				shade.b = fabs(f_W) / maxVal_W;
 			}
 			else {
-				shade.g = fabs(f_W) / maxVal_W;
+				shade.b = fabs(f_W) / maxVal_W;
 			}
 			Util::DrawLib::drawCircle(p_W, shade, halfCell_x / 4.0f);
 
