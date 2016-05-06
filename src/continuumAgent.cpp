@@ -20,6 +20,7 @@
 ContinuumAgent::ContinuumAgent()
 {
 	m_potentialGrid = NULL;
+	debug = false;
 	_enabled = false;
 }
 
@@ -149,7 +150,12 @@ void ContinuumAgent::updateAI(float timeStamp, float dt, unsigned int frameNumbe
 	//std::cout << "updating grid with target " << pos.x << " " << pos.y << std::endl;
 
 	m_potentialGrid->update(goal_pos);
-	Util::Vector velocity = m_potentialGrid->interpolateVelocity(_position) * 100.0f;// MAX_SPEED;
+	Util::Vector velocity = m_potentialGrid->interpolateVelocity(_position);// MAX_SPEED;
+	
+	if (debug) {
+		velocity = m_potentialGrid->interpolateVelocity(_position);// MAX_SPEED;
+	}
+	
 	//velocity = goal_pos - _position;
 	_doEulerStep(velocity, dt);
 
@@ -166,7 +172,7 @@ void ContinuumAgent::draw()
 	// if the agent is selected, do some annotations just for demonstration
 	if (gEngine->isAgentSelected(this)) {
 		Util::Ray ray;
-		ray.initWithUnitInterval(_position, _forward);
+		ray.initWithUnitInterval(_position, _velocity);
 		float t = 0.0f;
 		SteerLib::SpatialDatabaseItem * objectFound;
 		Util::DrawLib::drawLine(ray.pos, ray.eval(1.0f));
@@ -196,11 +202,11 @@ void ContinuumAgent::draw()
 			m_potentialGrid->m_speeds_densities->m_speed_E,
 			m_potentialGrid->m_speeds_densities->m_speed_W); */
 		
-		/*
+		/* for drawing potential grad */
 		drawFaceGrid(m_potentialGrid->m_dPotential_N,
 			m_potentialGrid->m_dPotential_S,
 			m_potentialGrid->m_dPotential_E,
-			m_potentialGrid->m_dPotential_W); */
+			m_potentialGrid->m_dPotential_W);
 		
 		/*
 		drawFaceGrid(m_potentialGrid->m_velocity_N,
@@ -365,10 +371,10 @@ void ContinuumAgent::drawFaceGrid(float_grid_2D *gridVals_N, float_grid_2D *grid
 			f_N = gridVals_N->getByIndex(x, z);
 			shade = Color(0.0f, 0.0f, 0.0f);
 			if (f_N < 0.0f) {
-				shade.r = fabs(f_N) / maxVal_N;
+				shade.b = fabs(f_N) / maxVal_N;
 			}
 			else {
-				shade.b = fabs(f_N) / maxVal_N;
+				shade.r = fabs(f_N) / maxVal_N;
 			}
 			Util::DrawLib::drawCircle(p_N, shade, halfCell_z / 4.0f);
 
@@ -378,10 +384,10 @@ void ContinuumAgent::drawFaceGrid(float_grid_2D *gridVals_N, float_grid_2D *grid
 			f_S = gridVals_S->getByIndex(x, z);
 			shade = Color(0.0f, 0.0f, 0.0f);
 			if (f_N < 0.0f) {
-				shade.r = fabs(f_S) / maxVal_S;
+				shade.b = fabs(f_S) / maxVal_S;
 			}
 			else {
-				shade.b = fabs(f_S) / maxVal_S;
+				shade.r = fabs(f_S) / maxVal_S;
 			}
 			Util::DrawLib::drawCircle(p_S, shade, halfCell_z / 4.0f);
 
@@ -391,10 +397,10 @@ void ContinuumAgent::drawFaceGrid(float_grid_2D *gridVals_N, float_grid_2D *grid
 			f_E = gridVals_E->getByIndex(x, z);
 			shade = Color(0.0f, 0.0f, 0.0f);
 			if (f_E < 0.0f) {
-				shade.r = fabs(f_E) / maxVal_E;
+				shade.b = fabs(f_E) / maxVal_E;
 			}
 			else {
-				shade.b = fabs(f_E) / maxVal_E;
+				shade.r = fabs(f_E) / maxVal_E;
 			}
 			Util::DrawLib::drawCircle(p_E, shade, halfCell_x / 4.0f);
 
@@ -404,10 +410,10 @@ void ContinuumAgent::drawFaceGrid(float_grid_2D *gridVals_N, float_grid_2D *grid
 			f_W = gridVals_W->getByIndex(x, z);
 			shade = Color(0.0f, 0.0f, 0.0f);
 			if (f_W < 0.0f) {
-				shade.r = fabs(f_W) / maxVal_W;
+				shade.b = fabs(f_W) / maxVal_W;
 			}
 			else {
-				shade.b = fabs(f_W) / maxVal_W;
+				shade.r = fabs(f_W) / maxVal_W;
 			}
 			Util::DrawLib::drawCircle(p_W, shade, halfCell_x / 4.0f);
 

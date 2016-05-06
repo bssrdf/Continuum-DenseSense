@@ -74,7 +74,7 @@ public:
 	//@}
 
 	std::vector<SteerLib::AgentGoalInfo> m_allGoalsList;
-
+	bool debug;
 protected:
 	/// Updates position, velocity, and orientation of the agent, given the force and dt time step.
 	void _doEulerStep(const Util::Vector & steeringDecisionForce, float dt);

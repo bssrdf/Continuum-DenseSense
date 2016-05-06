@@ -144,6 +144,9 @@ void ContinuumModule::preprocessSimulation()
 void ContinuumModule::setupGrids() {
 	//Build grids that are double the size needed to span everything in the scene
 	// make sure the resolution is sufficient so that cell is at least two agents wide
+	
+	// debug
+	m_agents[0]->debug = true;
 
 	std::set<SteerLib::SpatialDatabaseItemPtr> neighborList;
 	float big_val = HUGE_VAL;

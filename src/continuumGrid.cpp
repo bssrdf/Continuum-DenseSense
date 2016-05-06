@@ -7,6 +7,8 @@ ContinuumGrid::ContinuumGrid(int res_x, int res_z, Util::Point min, Util::Point 
 
 	m_avg_vel_x = new float_grid_2D(res_x, res_z, min, max);
 	m_avg_vel_z = new float_grid_2D(res_x, res_z, min, max);
+	m_avg_vel_x->m_outOfBounds = 0.0f;
+	m_avg_vel_z->m_outOfBounds = 0.0f;
 
 	m_speed_N = new float_grid_2D(res_x, res_z, min, max);
 	m_speed_S = new float_grid_2D(res_x, res_z, min, max);
@@ -140,13 +142,13 @@ void ContinuumGrid::computeSpeedFields() {
 	// EQ10: f(x, theta) = ((p(x + rn_theta) - pmin) / (pmax - pmin)) * f_v
 	// - sample the density in the next cell over
 
-	float p_max = std::fmax(0.99f, m_density->getMaxVal());
-	float p_min = m_density->getMinVal();
+	float p_max = 0.8f;
+	float p_min = 0.3f;
 
 	float f_v; // speed field value from sampling next cell over
 	float p_n; // pressure in next cell over
 	float f; // speed field computation
-	float f_t = -0.1f; // terrain speed anywhere is just -0.1f: you should always be happy moving away from your cell
+	float f_t = 5.0f; // in absence of other stuff, should always be happy moving away from your cell
 
 	for (int x = 0; x < m_res_x; x++) {
 		for (int z = 0; z < m_res_z; z++) {
@@ -156,24 +158,40 @@ void ContinuumGrid::computeSpeedFields() {
 			f_v = m_avg_vel_z->getByIndex(x, z + 1);
 			p_n = m_density->getByIndex(  x, z + 1);
 			f = f_t + (p_n - p_min) / (p_max - p_min) * (f_v - f_t);
+			if (p_n > p_max) 
+				f = f_v;
+			if (p_n < p_min) 
+				f = f_t;
 			m_speed_N->setByIndex(x, z, f);
 
 			// South, aka z-
 			f_v = m_avg_vel_z->getByIndex(x, z - 1) * -1.0f; // dot product with [0, -1]
 			p_n = m_density->getByIndex(  x, z - 1);
 			f = f_t + (p_n - p_min) / (p_max - p_min) * (f_v - f_t);
+			if (p_n > p_max)
+				f = f_v * -1.0f;
+			if (p_n < p_min) 
+				f = f_t * -1.0f;
 			m_speed_S->setByIndex(x, z, f);
 
 			// East, aka x+
 			f_v = m_avg_vel_x->getByIndex(x + 1, z);
 			p_n = m_density->getByIndex(  x + 1, z);
 			f = f_t + (p_n - p_min) / (p_max - p_min) * (f_v - f_t);
+			if (p_n > p_max) 
+				f = f_v;
+			if (p_n < p_min) 
+				f = f_t;
 			m_speed_E->setByIndex(x, z, f);
 
 			// West, aka x-
 			f_v = m_avg_vel_x->getByIndex(x - 1, z) * -1.0f; // dot product with [-1, 0]
 			p_n = m_density->getByIndex(  x - 1, z);
 			f = f_t + (p_n - p_min) / (p_max - p_min) * (f_v - f_t);
+			if (p_n > p_max) 
+				f = f_v * -1.0f;
+			if (p_n < p_min) 
+				f = f_t * -1.0f;
 			m_speed_W->setByIndex(x, z, f);
 		}
 	}

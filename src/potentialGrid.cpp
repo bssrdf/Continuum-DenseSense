@@ -280,7 +280,7 @@ void PotentialGrid::renormalizeGradient() {
 }
 
 void PotentialGrid::computeSpeeds() {
-	// to compute speed at a face, multiply grad by speed in the appropriate aniso direction
+	// to compute speed at a face, multiply grad by speed
 	float dPotential;
 	float speedSample;
 	float newVal;
@@ -288,46 +288,26 @@ void PotentialGrid::computeSpeeds() {
 		for (int z = 0; z < m_res_z; z++) {
 			// north
 			dPotential = m_dPotential_N->getByIndex(x, z);
-			if (dPotential > 0.0f) { // if potential points north
-				speedSample = m_speeds_densities->m_speed_N->getByIndex(x, z);
-			}
-			else {
-				speedSample = m_speeds_densities->m_speed_S->getByIndex(x, z + 1);
-			}
-			newVal = dPotential * speedSample;
+			speedSample = m_speeds_densities->m_speed_N->getByIndex(x, z);
+			newVal = -dPotential * speedSample;
 			m_velocity_N->setByIndex(x, z, newVal);
 
 			// south
 			dPotential = m_dPotential_S->getByIndex(x, z);
-			if (dPotential < 0.0f) { // if potenteial points south
-				speedSample = m_speeds_densities->m_speed_S->getByIndex(x, z);
-			}
-			else {
-				speedSample = m_speeds_densities->m_speed_N->getByIndex(x, z - 1);
-			}
-			newVal = dPotential * speedSample;
+			speedSample = m_speeds_densities->m_speed_S->getByIndex(x, z);
+			newVal = -dPotential * speedSample;
 			m_velocity_S->setByIndex(x, z, newVal);
 
 			// east
 			dPotential = m_dPotential_E->getByIndex(x, z);
-			if (dPotential > 0.0f) {
-				speedSample = m_speeds_densities->m_speed_E->getByIndex(x, z);
-			}
-			else {
-				speedSample = m_speeds_densities->m_speed_W->getByIndex(x + 1, z);
-			}
-			newVal = dPotential * speedSample;
+			speedSample = m_speeds_densities->m_speed_E->getByIndex(x, z);
+			newVal = -dPotential * speedSample;
 			m_velocity_E->setByIndex(x, z, newVal);
 
 			// west
-			dPotential = m_dPotential_E->getByIndex(x, z);
-			if (dPotential > 0.0f) {
-				speedSample = m_speeds_densities->m_speed_E->getByIndex(x, z);
-			}
-			else {
-				speedSample = m_speeds_densities->m_speed_W->getByIndex(x - 1, z);
-			}
-			newVal = dPotential * speedSample;
+			dPotential = m_dPotential_W->getByIndex(x, z);
+			speedSample = m_speeds_densities->m_speed_W->getByIndex(x, z);
+			newVal = -dPotential * speedSample;
 			m_velocity_W->setByIndex(x, z, newVal);
 		}
 	}
@@ -337,7 +317,7 @@ void PotentialGrid::update(Util::Point goalPosition)
 {
 	splatGoal(goalPosition);
 	computePotentialGradient();
-	renormalizeGradient();
+	//renormalizeGradient();
 	computeSpeeds();
 }
 

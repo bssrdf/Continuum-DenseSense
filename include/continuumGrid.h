@@ -2,12 +2,12 @@
 #define __CONTINUUM_GRID__
 #include "floatGrid2D.h"
 
-#define DENSITY_FALLOFF 0.9f
+#define DENSITY_FALLOFF 1.8f
 #define DENSITY_MIN 0.00001f // for preventing divide by zero errors
 #define COST_SMOOTH 0.00001f
 
-#define SPEED_WEIGHT 0.7f
-#define TIME_WEIGHT 0.2f
+#define SPEED_WEIGHT 1.0f
+#define TIME_WEIGHT 1.0f
 #define DISCOMFORT_WEIGHT 0.1f
 
 class ContinuumGrid
