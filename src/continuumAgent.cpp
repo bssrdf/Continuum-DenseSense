@@ -180,29 +180,29 @@ void ContinuumAgent::draw()
 		// draw a debug grid
 		//drawSingleGrid(m_potentialGrid->m_speeds_densities->m_density);
 		//drawAverageSpeeds();
-		/*
+		drawSingleGrid(m_potentialGrid->m_potential);
+		/* for drawing costs
 		drawFaceGrid(m_potentialGrid->m_speeds_densities->m_cost_N,
 			m_potentialGrid->m_speeds_densities->m_cost_S,
 			m_potentialGrid->m_speeds_densities->m_cost_E,
-			m_potentialGrid->m_speeds_densities->m_cost_W);*/
-		/*
+			m_potentialGrid->m_speeds_densities->m_cost_W); */
+		/* for drawing anisotropic speeds */
 		drawFaceGrid(m_potentialGrid->m_speeds_densities->m_speed_N,
 			m_potentialGrid->m_speeds_densities->m_speed_S,
 			m_potentialGrid->m_speeds_densities->m_speed_E,
-			m_potentialGrid->m_speeds_densities->m_speed_W);*/
+			m_potentialGrid->m_speeds_densities->m_speed_W);
 		/*
 		drawFaceGrid(m_potentialGrid->m_dPotential_N,
 			m_potentialGrid->m_dPotential_S,
 			m_potentialGrid->m_dPotential_E,
 			m_potentialGrid->m_dPotential_W); */
 		
-		/**/
+		/*
 		drawFaceGrid(m_potentialGrid->m_velocity_N,
 			m_potentialGrid->m_velocity_S,
 			m_potentialGrid->m_velocity_E,
-			m_potentialGrid->m_velocity_W);
+			m_potentialGrid->m_velocity_W); */
 
-		drawSingleGrid(m_potentialGrid->m_potential);
 	}
 	else {
 		Util::DrawLib::drawAgentDisc(_position, _forward, _radius, Util::gGray40);
