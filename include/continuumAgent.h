@@ -44,7 +44,7 @@ public:
 	void draw();
 	
 	// for debugging
-	void drawSingleGrid(float_grid_2D *gridVals);
+	void drawSingleGrid(float_grid_2D *gridVals, float maxVal);
 	void drawAverageSpeeds();
 	void drawFaceGrid(float_grid_2D *gridVals_N, float_grid_2D *gridVals_S, float_grid_2D *gridVals_E, float_grid_2D *gridVals_W);
 

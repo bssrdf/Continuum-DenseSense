@@ -176,9 +176,10 @@ void ContinuumAgent::draw()
 			Util::DrawLib::drawAgentDisc(_position, _forward, _radius);
 		}
 
-		// draw a debug grid
-		//drawSingleGrid(m_potentialGrid->m_speeds_densities->m_density); // draw density splat
-		drawSingleGrid(m_potentialGrid->m_potential); // draw potential
+		/*************** draw a debug grid ***************/
+
+		//drawSingleGrid(m_potentialGrid->m_speeds_densities->m_density, 1.0f); // draw density splat
+		drawSingleGrid(m_potentialGrid->m_potential, 10.0f); // draw potential
 
 		//drawAverageSpeeds(); // draw avg speeds
 		
@@ -216,7 +217,7 @@ void ContinuumAgent::draw()
 #endif
 }
 
-void ContinuumAgent::drawSingleGrid(float_grid_2D *gridVals) {
+void ContinuumAgent::drawSingleGrid(float_grid_2D *gridVals, float maxVal) {
 	if (gridVals == NULL) return;
 
 	Util::Point p1 = Util::Point(); // corner
@@ -225,7 +226,6 @@ void ContinuumAgent::drawSingleGrid(float_grid_2D *gridVals) {
 	Util::Point p4 = Util::Point();
 
 	Color shade(0.0f, 0.0f, 0.0f);
-	float maxVal = gridVals->getMaxVal() + 0.001f;
 	
 	float cell_margin_x = gridVals->m_cell_size_x / 15.0f;
 	float cell_margin_z = gridVals->m_cell_size_z / 15.0f;

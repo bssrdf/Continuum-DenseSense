@@ -142,6 +142,9 @@ void ContinuumGrid::computeSpeedFields() {
 	// EQ10: f(x, theta) = ((p(x + rn_theta) - pmin) / (pmax - pmin)) * f_v
 	// - sample the density in the next cell over
 
+	// idea is if vel is in same direction as cell->cell movement, speed is +, cost is +
+	// hence the dot product at the beginning
+
 	float p_max = 0.8f;
 	float p_min = 0.3f;
 
@@ -169,7 +172,7 @@ void ContinuumGrid::computeSpeedFields() {
 			p_n = m_density->getByIndex(  x, z - 1);
 			f = f_t + (p_n - p_min) / (p_max - p_min) * (f_v - f_t);
 			if (p_n > p_max)
-				f = f_v * -1.0f;
+				f = f_v;
 			if (p_n < p_min) 
 				f = f_t * -1.0f;
 			m_speed_S->setByIndex(x, z, f);
@@ -188,8 +191,8 @@ void ContinuumGrid::computeSpeedFields() {
 			f_v = m_avg_vel_x->getByIndex(x - 1, z) * -1.0f; // dot product with [-1, 0]
 			p_n = m_density->getByIndex(  x - 1, z);
 			f = f_t + (p_n - p_min) / (p_max - p_min) * (f_v - f_t);
-			if (p_n > p_max) 
-				f = f_v * -1.0f;
+			if (p_n > p_max)
+				f = f_v;
 			if (p_n < p_min) 
 				f = f_t * -1.0f;
 			m_speed_W->setByIndex(x, z, f);
@@ -215,22 +218,22 @@ void ContinuumGrid::computeCostFields() {
 			g = m_discomfort->getByIndex(x, z);
 
 			// North, aka z+
-			f = m_speed_N->getByIndex(x, z);// +COST_SMOOTH;
+			f = m_speed_N->getByIndex(x, z);
 			c = (SPEED_WEIGHT * f + TIME_WEIGHT + DISCOMFORT_WEIGHT * g) / f;
 			m_cost_N->setByIndex(x, z, c);
 
 			// South, aka z-
-			f = m_speed_S->getByIndex(x, z);// -COST_SMOOTH;
+			f = m_speed_S->getByIndex(x, z);
 			c = (SPEED_WEIGHT * f + TIME_WEIGHT + DISCOMFORT_WEIGHT * g) / f;
 			m_cost_S->setByIndex(x, z, c);
 
 			// East, aka x+
-			f = m_speed_E->getByIndex(x, z);// +COST_SMOOTH;
+			f = m_speed_E->getByIndex(x, z);
 			c = (SPEED_WEIGHT * f + TIME_WEIGHT + DISCOMFORT_WEIGHT * g) / f;
 			m_cost_E->setByIndex(x, z, c);
 
 			// West, aka x-
-			f = m_speed_W->getByIndex(x, z);// -COST_SMOOTH;
+			f = m_speed_W->getByIndex(x, z);
 			c = (SPEED_WEIGHT * f + TIME_WEIGHT + DISCOMFORT_WEIGHT * g) / f;
 			m_cost_W->setByIndex(x, z, c);
 		}

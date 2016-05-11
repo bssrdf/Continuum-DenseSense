@@ -325,8 +325,33 @@ float lerp(float t, float valA, float valB) {
 	return (1.0f - t)*valA + t*valB; // more precise, according to wikipedia
 }
 
+Util::Vector PotentialGrid::cellCenterVelocity(int x, int z)
+{
+
+	float v_N = m_velocity_N->getByIndex(x, z);
+	float v_S = m_velocity_S->getByIndex(x, z);
+	float v_E = m_velocity_E->getByIndex(x, z);
+	float v_W = m_velocity_W->getByIndex(x, z);
+
+	Util::Point center = m_potential->getCellCenter(x, z);
+
+
+	float pos_z_N = center.z + m_potential->m_cell_size_z / 2.0f;
+	float pos_z_S = center.z - m_potential->m_cell_size_z / 2.0f;
+	float pos_x_E = center.x + m_potential->m_cell_size_x / 2.0f;
+	float pos_x_W = center.x - m_potential->m_cell_size_x / 2.0f;
+
+	// lerp in each direction to get the vector we want
+	Util::Vector velocity;
+	velocity.z = v_N - v_S;// lerp(0.5f, v_S, v_N);
+	velocity.x = v_W - v_E;// lerp(0.5f, v_E, v_W);
+	return velocity;
+}
+
+
 Util::Vector PotentialGrid::interpolateVelocity(Util::Point pos)
 {
+	/*
 	float v_N = m_velocity_N->getByCoordinate(pos.x, pos.z);
 	float v_S = m_velocity_S->getByCoordinate(pos.x, pos.z);
 	float v_E = m_velocity_E->getByCoordinate(pos.x, pos.z);
@@ -346,5 +371,46 @@ Util::Vector PotentialGrid::interpolateVelocity(Util::Point pos)
 	velocity.z = lerp(t_Z, v_S, v_N);
 	float t_X = (pos.x - pos_x_W) / m_potential->m_cell_size_x;
 	velocity.x = lerp(t_X, v_E, v_W);
-	return velocity;
+	return velocity; */
+
+	// compute the cell center that is less than x, z
+	Util::Point min = m_potential->getCellCenter(pos.x, pos.z);
+	if (min.x > pos.x) min.x -= m_potential->m_cell_size_x;
+	if (min.z > pos.z) min.z -= m_potential->m_cell_size_z;
+
+	/****************
+	max
+	A-----B
+	|     |
+	|     |
+	C-----D
+	min
+
+	*****************/
+	int x, z;
+	m_potential->getIndicesForCoordinate(min.x, min.z, x, z);
+
+	Util::Vector c = cellCenterVelocity(x, z);
+	Util::Vector d = cellCenterVelocity(x + 1, z);
+	Util::Vector b = cellCenterVelocity(x + 1, z + 1);
+	Util::Vector a = cellCenterVelocity(x, z + 1);
+
+	float cd_x, cd_z;
+	float ab_x, ab_z;
+
+	float interp_x;
+	float interp_z;
+
+	// do lerps along one axis
+	float t = (x - min.x) / m_potential->m_cell_size_x;
+	cd_x = (1.0f - t) * c.x + d.x * t;
+	ab_x = (1.0f - t) * a.x + b.x * t;
+	cd_z = (1.0f - t) * c.z + d.z * t;
+	ab_z = (1.0f - t) * a.z + b.z * t;
+
+	// and then along the other!
+	t = (z - min.z) / m_potential->m_cell_size_z;
+	interp_x = (1.0f - t) * cd_x + t * ab_x;
+	interp_z = (1.0f - t) * cd_z + t * ab_z;
+	return Util::Vector(interp_x, 0.0f, interp_z);
 }

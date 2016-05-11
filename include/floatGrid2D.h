@@ -29,6 +29,8 @@ public:
 	bool inBounds(int x, int z);
 	bool finBounds(float x, float z);
 
+	float bilinearInterp(float x, float z);
+
 	std::vector<float> m_values;
 	int m_res_x;
 	int m_res_z;

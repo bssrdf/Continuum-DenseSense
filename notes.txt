@@ -1,9 +1,16 @@
+5/9/2016
+-do something better for drawing grids -> stop normalizing around max on grid [done]
+-do a walk through [done]
+  -found some clarifications on cost field stuff. yay!
+-try bilinear interpolating the velocity instead of just double-linear
+-try distance enforcement
+
 5/5/2016
 -fresh start notes
 -ok. each grid cell stores:
   -discomfort - any cells touching obstacles. we'll just support round ones for now
-  -density - computed by splatting
-  -potential - computed by fast flood fill
+  -density - computed by potential
+  -splatting - computed by fast flood fill
   -avg_velocity (two floats) -> equation 7
 -on faces:
   -aniso: flow speed INTO each neighbor -> equation 9, 10

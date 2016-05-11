@@ -165,3 +165,37 @@ bool float_grid_2D::finBounds(float x, float z)
 {
 	return (x >= m_min.x && x < m_max.x && z >= m_min.z && z < m_max.z);
 }
+
+float float_grid_2D::bilinearInterp(float x, float z) {
+	// compute the cell center that is less than x, z
+	Util::Point min = getCellCenter(x, z);
+	if (min.x > x) min.x -= m_cell_size_x;
+	if (min.z > z) min.z -= m_cell_size_z;
+
+	/****************
+				max
+		A-----B
+		|     |
+		|     |
+		C-----D
+	min
+
+	*****************/
+
+	float c = getByCoordinate(min.x, min.z);
+	float d = getByCoordinate(min.x + m_cell_size_x, min.z);
+	float b = getByCoordinate(min.x + m_cell_size_x, min.z + m_cell_size_z);
+	float a = getByCoordinate(min.x, min.z + m_cell_size_z);
+
+	float cd;
+	float ab;
+
+	// do lerps along one axis
+	float t = (x - min.x) / m_cell_size_x;
+	cd = (1.0f - t) * c + d * t;
+	ab = (1.0f - t) * a + b * t;
+
+	// and then along the other!
+	t = (z - min.z) / m_cell_size_z;
+	return (1.0f - t) * cd + t * ab;
+}

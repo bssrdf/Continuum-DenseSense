@@ -49,6 +49,9 @@ public:
 	float_grid_2D *m_velocity_E;
 	float_grid_2D *m_velocity_W;
 
+	float_grid_2D *m_velocity_X; // final velocity X
+	float_grid_2D *m_velocity_Z; // final velocity Z
+
 	int m_res_x;
 	int m_res_z;
 
@@ -59,6 +62,7 @@ public:
 
 	void update(Util::Point goalPosition);
 
+	Util::Vector cellCenterVelocity(int x, int z);
 	Util::Vector interpolateVelocity(Util::Point pos);
 
 private:
