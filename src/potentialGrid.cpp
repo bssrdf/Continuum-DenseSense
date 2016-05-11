@@ -343,8 +343,8 @@ Util::Vector PotentialGrid::cellCenterVelocity(int x, int z)
 
 	// lerp in each direction to get the vector we want
 	Util::Vector velocity;
-	velocity.z = v_N - v_S;// lerp(0.5f, v_S, v_N);
-	velocity.x = v_W - v_E;// lerp(0.5f, v_E, v_W);
+	velocity.z = lerp(0.5f, v_S, v_N);
+	velocity.x = lerp(0.5f, v_E, v_W);
 	return velocity;
 }
 
